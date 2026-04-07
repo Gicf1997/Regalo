@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lugarcitouuu</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Dancing+Script:wght@500;700&family=Quicksand:wght@300;500&display=swap" rel="stylesheet">
+<style>
+    /* Transiciones mágicas */
+  body { opacity: 0; animation: fadeIn 1.5s forwards; }
+  @keyframes fadeIn { to { opacity: 1; } }
+  body.fade-out { opacity: 0 !important; transition: opacity 1s ease; }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body, html { 
+    width: 100%; height: 100%; overflow: hidden; 
+    font-family: 'Quicksand', sans-serif; color: white;
+    /* Fondo de atardecer cálido y romántico */
+    background: linear-gradient(to bottom, #1a0b2e 0%, #4b1f61 40%, #dd5e89 80%, #f7bb97 100%);
+    background-size: 100% 200%;
+    transition: background-position 2s ease;
+  }
+  
+  /* Cuando la música suena, el fondo baja un poco simulando que cae la noche */
+  body.playing { background-position: 0 100%; }
+
+  canvas { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none; }
+
+  /* --- CONTENEDOR PRINCIPAL --- */
+  #refuge-container {
+    position: relative; z-index: 10; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; height: 100%; padding: 20px;
+  }
+
+  /* Textos Superiores */
+  .title { font-family: 'Cinzel Decorative', serif; font-size: clamp(2rem, 5vw, 3.5rem); text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); margin-bottom: 5px; }
+  .subtitle { font-family: 'Dancing Script', cursive; font-size: 1.5rem; color: #ffe6e6; opacity: 0.9; margin-bottom: 40px; }
+
+  /* --- EL TOCADISCOS MÁGICO --- */
+  #vinyl-container {
+    position: relative; width: 220px; height: 220px; margin-bottom: 40px;
+    border-radius: 50%; box-shadow: 0 0 40px rgba(0,0,0,0.5), 0 0 60px rgba(221, 94, 137, 0.3);
+    transition: box-shadow 0.5s ease;
+  }
+  body.playing #vinyl-container { box-shadow: 0 0 50px rgba(255, 255, 255, 0.4), 0 0 80px rgba(247, 187, 151, 0.6); }
+
+  /* El disco de vinilo hecho con CSS */
+  #vinyl {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: repeating-radial-gradient( #111 0%, #1a1a1a 5%, #111 10% );
+    border: 5px solid #222; display: flex; align-items: center; justify-content: center;
+    transition: transform 0.5s;
+  }
+  /* Etiqueta central del disco */
+  #vinyl-label { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, #dd5e89, #f7bb97); border: 2px solid #fff; position: relative; }
+  #vinyl-label::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 15px; height: 15px; background: #000; border-radius: 50%; }
+
+  /* Animación de giro */
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+  .spinning { animation: spin 4s linear infinite; }
+
+  /* --- ÁREA DE MENSAJES (Letras/Dedicatorias) --- */
+  #message-box {
+    min-height: 80px; max-width: 600px; text-align: center; margin-bottom: 30px;
+    font-family: 'Dancing Script', cursive; font-size: 1.6rem; line-height: 1.5;
+    color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    opacity: 0; transition: opacity 1s ease;
+  }
+  #message-box.visible { opacity: 1; }
+
+  /* --- LISTA DE CANCIONES --- */
+  #playlist { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+  .track-btn {
+    background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 10px 20px; border-radius: 30px; color: white; font-family: 'Quicksand'; font-size: 1rem;
+    cursor: pointer; backdrop-filter: blur(5px); transition: all 0.3s ease;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .track-btn:hover { background: rgba(255, 255, 255, 0.25); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(221, 94, 137, 0.4); }
+  .track-btn.active { background: rgba(221, 94, 137, 0.6); border-color: #f7bb97; }
+
+  /* Botón de salida */
+  .exit-btn {
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: transparent; border: 1px solid #f7bb97; color: #f7bb97;
+    padding: 8px 20px; font-family: 'Cinzel Decorative', serif; border-radius: 5px; cursor: pointer; transition: 0.3s;
+  }
+  .exit-btn:hover { background: rgba(247, 187, 151, 0.2); box-shadow: 0 0 15px #f7bb97; }
+
+</style>
+</head>
+<body>
+
+<canvas id="music-canvas"></canvas>
+
+<audio id="audio-0" src="cancion1.mp3"></audio>
+<audio id="audio-1" src="cancion2.mp3"></audio>
+<audio id="audio-2" src="cancion3.mp3"></audio>
+<audio id="audio-3" src="cancion4.mp3"></audio>
+
+<div id="refuge-container">
+  <h1 class="title">Lugarcitouuu</h1>
+  <div class="subtitle">Nuestro rincón seguro en el universo</div>
+
+  <div id="vinyl-container">
+    <div id="vinyl"><div id="vinyl-label"></div></div>
+  </div>
+
+  <div id="message-box"></div>
+
+  <div id="playlist">
+    <button class="track-btn" onclick="playTrack(0, this)">▶ Canción 1</button>
+    <button class="track-btn" onclick="playTrack(1, this)">▶ Canción 2</button>
+    <button class="track-btn" onclick="playTrack(2, this)">▶ Canción 3</button>
+    <button class="track-btn" onclick="playTrack(3, this)">▶ Canción 4</button>
+  </div>
+</div>
+
+<button class="exit-btn" onclick="volverAlEspacio()">Volver al Espacio</button>
+
+<script>
+  // ══════════════════════════════════════════════════════════
+  // 💌 PERSONALIZACIÓN: Dedicatorias para cada canción
+  // ══════════════════════════════════════════════════════════
+  const trackData = [
+    { title: "Nuestra Primera Canción", message: "Esta melodía siempre me recordará al momento exacto en el que supe que eras tú." },
+    { title: "Cuando te extraño", message: "Para esos días en los que el mundo hace ruido, esta es la paz que encuentro pensando en ti." },
+    { title: "El viaje", message: "Porque cada nota de esta canción se siente como sostener tu mano mientras avanzamos juntos." },
+    { title: "Tu favorita", message: "Me encanta verte sonreír cuando suena esta. Tu felicidad es mi estribillo favorito." }
+  ];
+
+  let currentAudio = null;
+  const vinyl = document.getElementById('vinyl');
+  const msgBox = document.getElementById('message-box');
+  const buttons = document.querySelectorAll('.track-btn');
+
+  function playTrack(index, btnElement) {
+    // 1. Pausar la canción anterior si hay una sonando
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0; 
+    }
+
+    // 2. Limpiar estilos de los botones
+    buttons.forEach(btn => {
+      btn.classList.remove('active');
+      btn.innerHTML = btn.innerHTML.replace('⏸', '▶'); // Cambiar icono
+    });
+
+    // 3. Obtener el nuevo audio
+    const newAudio = document.getElementById(`audio-${index}`);
+
+    // Lógica de Play / Pause para el mismo botón
+    if (currentAudio === newAudio && !newAudio.paused) {
+      newAudio.pause();
+      vinyl.classList.remove('spinning');
+      document.body.classList.remove('playing');
+      btnElement.innerHTML = btnElement.innerHTML.replace('⏸', '▶');
+      currentAudio = null;
+      msgBox.classList.remove('visible');
+      return;
+    }
+
+    // 4. Reproducir nueva canción
+    currentAudio = newAudio;
+    currentAudio.play();
+    
+    // 5. Actualizar UI
+    btnElement.classList.add('active');
+    btnElement.innerHTML = btnElement.innerHTML.replace('▶', '⏸');
+    vinyl.classList.add('spinning');
+    document.body.classList.add('playing');
+
+    // 6. Mostrar mensaje con transición suave
+    msgBox.classList.remove('visible');
+    setTimeout(() => {
+      msgBox.innerHTML = `"${trackData[index].message}"`;
+      msgBox.classList.add('visible');
+    }, 400); // Pequeño retraso para que el fade-out termine
+  }
+
+  // --- ANIMACIONES DEL CANVAS (Notas musicales flotantes) ---
+  const cvs = document.getElementById('music-canvas');
+  const ctx = cvs.getContext('2d');
+  let W, H;
+  function resize() { W = cvs.width = window.innerWidth; H = cvs.height = window.innerHeight; }
+  window.addEventListener('resize', resize); resize();
+
+  const notes = ['♩', '♪', '♫', '♬', '✨', '💙'];
+  const particles = Array.from({length: 40}, () => ({
+    x: Math.random() * W, y: Math.random() * H,
+    vy: Math.random() * -1 - 0.5,
+    sym: notes[Math.floor(Math.random() * notes.length)],
+    size: Math.random() * 15 + 10,
+    alpha: Math.random()
+  }));
+
+  function render() {
+    ctx.clearRect(0, 0, W, H);
+    
+    // Solo animar partículas fuertemente si hay música
+    const isPlaying = document.body.classList.contains('playing');
+
+    particles.forEach(p => {
+      p.y += isPlaying ? p.vy * 1.5 : p.vy * 0.3; // Más rápido si suena música
+      p.x += Math.sin(p.y * 0.02) * 0.5; // Movimiento ondulado
+      
+      if(p.y < -30) { p.y = H + 30; p.x = Math.random() * W; }
+      
+      ctx.globalAlpha = isPlaying ? p.alpha : p.alpha * 0.3;
+      ctx.fillStyle = '#fff';
+      ctx.font = `${p.size}px Arial`;
+      ctx.fillText(p.sym, p.x, p.y);
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(render);
+  }
+  render();
+  function volverAlEspacio() {
+    document.body.classList.add('fade-out');
+    setTimeout(() => { window.location.href = 'Hub.html'; }, 1000);
+  }
+</script>
+</body>
+</html>

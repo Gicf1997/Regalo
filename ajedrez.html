@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>La Partida de la Ópera</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cinzel+Decorative:wght@400;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   RESET + BASE
+═══════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;
+  background:#080604;color:#F5F0E8;
+  font-family:'EB Garamond',serif;cursor:none;}
+body{opacity:0;animation:fadeIn 1.8s forwards;}
+@keyframes fadeIn{to{opacity:1;}}
+body.fade-out{opacity:0!important;transition:opacity 1.2s ease;}
+
+/* ─ CURSOR RETÍCULA ─────────────────────── */
+#cur{position:fixed;z-index:9999;pointer-events:none;
+  width:22px;height:22px;transform:translate(-50%,-50%);}
+#cur::before,#cur::after{content:'';position:absolute;
+  background:rgba(212,168,67,.72);}
+#cur::before{width:100%;height:1px;top:50%;left:0;transform:translateY(-50%);}
+#cur::after{width:1px;height:100%;left:50%;top:0;transform:translateX(-50%);}
+#cur-dot{position:fixed;z-index:10000;pointer-events:none;
+  width:3px;height:3px;border-radius:50%;
+  background:rgba(212,168,67,.9);transform:translate(-50%,-50%);}
+
+/* ─ GRAIN ───────────────────────────────── */
+body::after{content:'';position:fixed;inset:0;z-index:300;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity:.5;mix-blend-mode:overlay;}
+
+/* ─ LETTERBOX ───────────────────────────── */
+#lbt,#lbb{position:fixed;left:0;right:0;background:#000;
+  z-index:290;pointer-events:none;height:6vh;}
+#lbt{top:0;}#lbb{bottom:0;}
+
+/* ─ CANVAS ──────────────────────────────── */
+#bg-canvas,#vc-canvas{position:fixed;top:0;left:0;
+  z-index:0;pointer-events:none;}
+
+/* ═══════════════════════════════════════════
+   SISTEMA DE FASES
+   Cada fase: fixed inset:0, flex column
+   Solo .active es visible y recibe eventos
+═══════════════════════════════════════════ */
+.phase{
+  position:fixed;inset:0;z-index:5;
+  opacity:0;pointer-events:none;
+  transition:opacity 1.2s ease;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.phase.active{opacity:1;pointer-events:auto;}
+
+/* ═══════════════════════════════════════════
+   FASE 0 — INTRO CINEMÁTICA
+═══════════════════════════════════════════ */
+#ph0{text-align:center;padding:0 36px;gap:0;}
+
+#ph0-meta{
+  font-family:'Cinzel',serif;font-size:clamp(.68rem,1.2vw,.82rem);
+  letter-spacing:.42em;text-transform:uppercase;
+  color:rgba(212,168,67,.0);margin-bottom:22px;
+  transition:color 1.2s ease;}
+#ph0-meta.lit{color:rgba(212,168,67,.72);}
+
+#ph0-title{
+  font-family:'Cinzel Decorative',serif;
+  font-size:clamp(2rem,5.8vw,4.4rem);
+  color:rgba(245,240,232,.0);line-height:1.16;margin-bottom:18px;
+  transition:color 1.5s ease,text-shadow 1.5s ease;}
+#ph0-title.lit{color:rgba(245,240,232,.96);
+  text-shadow:0 0 42px rgba(212,168,67,.28),0 2px 22px rgba(0,0,0,.98);}
+
+.deco-line{width:72px;height:1px;margin:0 auto 20px;
+  background:linear-gradient(90deg,transparent,rgba(212,168,67,.5),transparent);
+  opacity:0;transition:opacity 1.2s ease .7s;}
+.deco-line.lit{opacity:1;}
+
+#ph0-sub{
+  font-family:'Playfair Display',serif;font-style:italic;
+  font-size:clamp(.95rem,2.2vw,1.38rem);
+  color:rgba(212,168,67,.0);max-width:500px;line-height:1.75;margin-bottom:52px;
+  transition:color 1.4s ease .5s;}
+#ph0-sub.lit{color:rgba(212,168,67,.62);}
+
+/* ═══════════════════════════════════════════
+   BOTONES — ESTILO ÓPERA
+═══════════════════════════════════════════ */
+.nav-btn{
+  font-family:'Cinzel',serif;font-size:clamp(.7rem,1.3vw,.84rem);
+  letter-spacing:.24em;text-transform:uppercase;
+  color:rgba(212,168,67,.82);
+  background:rgba(8,6,4,.72);backdrop-filter:blur(8px);
+  border:1px solid rgba(212,168,67,.22);
+  border-top:1px solid rgba(212,168,67,.45);
+  padding:11px 28px;
+  cursor:none;border-radius:3px;
+  box-shadow:0 4px 20px rgba(0,0,0,.7),inset 0 0 14px rgba(212,168,67,.04);
+  transition:all .4s ease;overflow:hidden;position:relative;
+  opacity:0;pointer-events:none;}
+.nav-btn.show{opacity:1;pointer-events:auto;}
+.nav-btn:hover{color:#F5F0E8;background:rgba(18,12,6,.88);
+  border-color:rgba(212,168,67,.75);
+  box-shadow:0 0 22px rgba(212,168,67,.35),0 6px 28px rgba(0,0,0,.8);
+  transform:translateY(-2px);}
+.nav-btn::after{content:'';position:absolute;bottom:0;left:50%;
+  transform:translateX(-50%);width:35%;height:1px;
+  background:rgba(212,168,67,.6);
+  box-shadow:0 0 8px 2px rgba(212,168,67,.55);
+  opacity:.4;transition:all .4s;}
+.nav-btn:hover::after{opacity:1;width:78%;}
+
+/* ═══════════════════════════════════════════
+   FASE 1 — LA PARTIDA ANIMADA
+   Layout: columna con 3 zonas:
+   [zona-principal: row narración+tablero]
+   [zona-cta: btn-puzzle centrado]
+═══════════════════════════════════════════ */
+#ph1{
+  justify-content:center;
+  padding:7vh 18px 8vh;
+  gap:0;
+}
+
+/* Zona principal: narración a la izquierda, tablero a la derecha */
+#ph1-main{
+  display:flex;flex-direction:row;
+  align-items:center;justify-content:center;
+  gap:clamp(14px,3vw,50px);
+  flex-wrap:wrap;
+  width:100%;
+  flex:0 1 auto;
+}
+@media(max-width:640px){
+  #ph1-main{flex-direction:column-reverse;gap:10px;}
+}
+
+/* Zona CTA: solo btn-puzzle, centrado, separado */
+#ph1-cta{
+  width:100%;display:flex;justify-content:center;
+  margin-top:18px;min-height:48px;
+  align-items:center;
+}
+
+/* ─ Panel Narración ──────────────────────
+   Contiene SOLO: contador, notación, regla, descripción, btn-next
+   btn-puzzle NO vive aquí
+──────────────────────────────────────────*/
+#narration{
+  max-width:min(260px,35vw);
+  background:rgba(8,6,4,.78);
+  border:1px solid rgba(212,168,67,.14);
+  border-top:2px solid rgba(212,168,67,.45);
+  border-radius:2px;
+  padding:24px 20px 20px;
+  box-shadow:0 14px 42px rgba(0,0,0,.8),inset 0 1px 0 rgba(212,168,67,.08);
+  display:flex;flex-direction:column;gap:12px;
+  position:relative;flex-shrink:0;
+}
+@media(max-width:640px){#narration{max-width:92vw;}}
+#narration::before{content:'✦';position:absolute;top:8px;left:50%;
+  transform:translateX(-50%);font-family:'Cinzel',serif;
+  font-size:.5rem;color:rgba(212,168,67,.3);}
+
+#move-counter{font-family:'Cinzel',serif;font-size:.58rem;
+  letter-spacing:.22em;text-transform:uppercase;color:rgba(212,168,67,.45);}
+
+#notation-display{font-family:'Cinzel Decorative',serif;
+  font-size:clamp(1.2rem,3vw,2rem);color:#D4A843;
+  text-shadow:0 0 16px rgba(212,168,67,.4);
+  min-height:1.3em;line-height:1.15;}
+
+.narration-rule{width:100%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,168,67,.18),transparent);}
+
+#move-desc{font-family:'Playfair Display',serif;font-style:italic;
+  font-size:clamp(.82rem,1.8vw,1.04rem);
+  color:rgba(245,240,232,.65);line-height:1.72;min-height:4.5em;}
+
+/* btn-next vive dentro del panel de narración */
+/* Al hacer display:none el panel no se rompe porque es flex column con gap */
+
+/* ═══════════════════════════════════════════
+   TABLEROS
+   anim-board: solo lectura, overflow visible para animación
+   puzzle-board: interactivo, overflow hidden
+═══════════════════════════════════════════ */
+.board-wrap{
+  position:relative;flex-shrink:0;
+  width:min(310px,74vw);height:min(310px,74vw);
+  box-shadow:
+    0 0 0 2px rgba(212,168,67,.18),
+    0 0 0 6px rgba(8,6,4,.95),
+    0 0 0 8px rgba(212,168,67,.12),
+    0 22px 60px rgba(0,0,0,.95);
+}
+
+.board-grid{
+  position:relative;width:100%;height:100%;
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  grid-template-rows:repeat(8,1fr);
+}
+
+/* Tablero animación: overflow visible para que la pieza "vuele" entre celdas */
+#anim-board{overflow:visible;}
+/* Tablero puzzle: overflow hidden, piezas no salen del borde */
+#puzzle-board{overflow:hidden;border-radius:0;}
+
+/* Celdas base — compartidas por ambos tableros */
+.cell{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  font-size:clamp(1.3rem,4vw,2rem);
+  user-select:none;transition:background .18s;
+}
+.cell.light{background:#D4B896;}
+.cell.dark {background:#3D2B1F;}
+
+/* Solo el tablero de animación bloquea clics */
+#anim-board .cell{cursor:none;pointer-events:none;}
+/* El tablero puzzle sí recibe clics — cursor por pieza */
+#puzzle-board .cell{cursor:none;}
+#puzzle-board .piece-white{cursor:none;}
+
+/* Estados de interacción — SOLO puzzle-board los usa */
+.cell.selected{background:rgba(212,168,67,.52)!important;
+  box-shadow:inset 0 0 14px rgba(212,168,67,.48);}
+.cell.hint{background:rgba(160,50,30,.38)!important;}
+.cell.hint::after{content:'';position:absolute;width:26%;height:26%;
+  background:rgba(255,200,180,.55);border-radius:50%;
+  animation:hintPulse 1.4s infinite;}
+.cell.wrong{animation:shake .36s ease;}
+.cell.last-move{background:rgba(212,168,67,.28)!important;}
+
+@keyframes hintPulse{0%{transform:scale(.8);opacity:1}100%{transform:scale(2.4);opacity:0}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* Piezas */
+.piece-white{color:#F5EDD8;
+  text-shadow:0 1px 4px rgba(0,0,0,.8),0 0 8px rgba(245,237,216,.18);}
+.piece-black{color:#1A100A;
+  text-shadow:0 1px 2px rgba(255,255,255,.12);}
+
+/* Coordenadas */
+.coord{position:absolute;font-family:'Cinzel',serif;font-size:.44rem;
+  color:rgba(212,168,67,.26);pointer-events:none;user-select:none;}
+.coord.file{bottom:2px;right:3px;}
+.coord.rank{top:2px;left:3px;}
+
+/* ═══════════════════════════════════════════
+   FASE 2 — EL PUZZLE
+   Layout: header arriba, tablero centrado, nada más
+═══════════════════════════════════════════ */
+#ph2{gap:18px;}
+
+#puzzle-header{
+  text-align:center;
+  background:rgba(8,6,4,.78);
+  border:1px solid rgba(212,168,67,.14);
+  border-top:2px solid rgba(212,168,67,.45);
+  border-radius:2px;padding:15px 28px;
+  box-shadow:0 8px 32px rgba(0,0,0,.65);}
+#puzzle-title{font-family:'Cinzel Decorative',serif;
+  font-size:clamp(1rem,2.5vw,1.55rem);
+  color:rgba(212,168,67,.95);
+  text-shadow:0 0 14px rgba(212,168,67,.35);margin-bottom:4px;}
+#puzzle-sub{font-family:'Playfair Display',serif;font-style:italic;
+  font-size:clamp(.82rem,1.7vw,1.04rem);color:rgba(245,240,232,.42);}
+
+/* ═══════════════════════════════════════════
+   FASE 3 — VICTORIA
+═══════════════════════════════════════════ */
+#ph3{text-align:center;padding:7vh 28px;gap:0;justify-content:center;}
+
+#mate-title{
+  font-family:'Cinzel Decorative',serif;
+  font-size:clamp(2.2rem,7vw,5.4rem);
+  color:#D4A843;letter-spacing:.05em;
+  text-shadow:0 0 45px rgba(212,168,67,.75),0 0 90px rgba(180,120,30,.35);
+  opacity:0;transform:scale(.65);
+  transition:opacity 1s ease,transform 1s cubic-bezier(.175,.885,.32,1.275);
+  margin-bottom:26px;}
+#mate-title.show{opacity:1;transform:scale(1);}
+
+#victory-panel{
+  background:rgba(8,6,4,.82);
+  border:1px solid rgba(212,168,67,.16);
+  border-top:2px solid rgba(212,168,67,.5);
+  border-radius:2px;
+  padding:clamp(20px,4vh,38px) clamp(22px,4vw,46px);
+  max-width:min(560px,90vw);
+  box-shadow:0 20px 60px rgba(0,0,0,.88),0 0 45px rgba(212,168,67,.07),
+    inset 0 1px 0 rgba(212,168,67,.06);
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  opacity:0;transform:translateY(20px);
+  transition:opacity 1.4s ease .7s,transform 1.4s ease .7s;}
+#victory-panel.show{opacity:1;transform:translateY(0);}
+#victory-panel::before{content:'— ✦ —';font-family:'Cinzel',serif;
+  font-size:.6rem;letter-spacing:.4em;color:rgba(212,168,67,.35);}
+
+#phrase-reveal{
+  font-family:'Playfair Display',serif;font-style:italic;
+  font-size:clamp(1.15rem,3.2vw,2rem);
+  color:rgba(245,240,232,.0);letter-spacing:.01em;
+  transition:color 1.8s ease,text-shadow 1.8s ease;min-height:1.5em;
+  text-align:center;}
+#phrase-reveal.show{color:rgba(212,168,67,.95);
+  text-shadow:0 0 22px rgba(212,168,67,.45),0 0 48px rgba(180,120,30,.18);}
+
+.victory-rule{width:45px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,168,67,.4),transparent);}
+
+#victory-msg{font-family:'Playfair Display',serif;font-style:italic;
+  font-size:clamp(.9rem,2vw,1.2rem);color:rgba(245,240,232,.0);
+  line-height:1.82;transition:color 1.8s ease .8s;
+  text-align:center;max-width:460px;}
+#victory-msg.show{color:rgba(245,240,232,.7);}
+
+/* Garantía: ningún botón dentro de una fase inactiva puede
+   interceptar clics, aunque tenga pointer-events:auto propio */
+.phase:not(.active) .nav-btn{pointer-events:none!important;}
+.phase:not(.active) button{pointer-events:none!important;}
+
+/* ─ EXIT ─────────────────────────────────── */
+#exit-btn{position:fixed;bottom:7vh;right:24px;z-index:20;
+  background:none;border:none;font-family:'Cinzel',serif;font-size:.62rem;
+  letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(212,168,67,.28);cursor:none;display:none;transition:.3s;}
+#exit-btn:hover{color:rgba(212,168,67,.72);}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-dot"></div>
+<div id="lbt"></div>
+<div id="lbb"></div>
+<canvas id="bg-canvas"></canvas>
+<canvas id="vc-canvas"></canvas>
+
+<!-- ═════════════════════════════════════
+     FASE 0: INTRO
+════════════════════════════════════════ -->
+<div class="phase active" id="ph0">
+  <div id="ph0-meta">París · 21 de octubre de 1858</div>
+  <div id="ph0-title">La Partida<br>de la Ópera</div>
+  <div class="deco-line" id="ph0-rule"></div>
+  <div id="ph0-sub">La noche que Paul Morphy demostró que la belleza más sublime del ajedrez surge del sacrificio.</div>
+  <button class="nav-btn show" id="btn-start" onclick="goPhase(1)">Presenciar la partida</button>
+</div>
+
+<!-- ═════════════════════════════════════
+     FASE 1: LA PARTIDA ANIMADA
+     Layout:
+       #ph1-main  → narración (izq) + tablero (der)
+       #ph1-cta   → btn-puzzle centrado (debajo)
+════════════════════════════════════════ -->
+<div class="phase" id="ph1">
+
+  <div id="ph1-main">
+
+    <!-- Panel de narración: contador, notación, descripción, btn-next -->
+    <div id="narration">
+      <div id="move-counter"></div>
+      <div id="notation-display"></div>
+      <div class="narration-rule"></div>
+      <div id="move-desc"></div>
+      <button class="nav-btn" id="btn-next" onclick="playNextMove()">
+        Siguiente jugada
+      </button>
+    </div>
+
+    <!-- Tablero de animación (solo lectura) -->
+    <div class="board-wrap">
+      <div class="board-grid" id="anim-board"></div>
+    </div>
+
+  </div>
+
+  <!-- CTA separado: aparece cuando la historia termina -->
+  <div id="ph1-cta">
+    <button class="nav-btn" id="btn-puzzle" onclick="goPhase(2)">
+      ¿Ves el mate? — Jugar
+    </button>
+  </div>
+
+</div>
+
+<!-- ═════════════════════════════════════
+     FASE 2: EL PUZZLE (INTERACTIVO)
+     Solo: header + tablero interactivo
+════════════════════════════════════════ -->
+<div class="phase" id="ph2">
+  <div id="puzzle-header">
+    <div id="puzzle-title">Juegan Blancas · Mate en 1</div>
+    <div id="puzzle-sub">El mismo movimiento que Morphy vio en un instante.</div>
+  </div>
+  <div class="board-wrap">
+    <div class="board-grid" id="puzzle-board"></div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     FASE 3: VICTORIA
+════════════════════════════════════════ -->
+<div class="phase" id="ph3">
+  <div id="mate-title">Jaque Mate</div>
+  <div id="victory-panel">
+    <div id="phrase-reveal"></div>
+    <div class="victory-rule"></div>
+    <div id="victory-msg">
+      Como Morphy en la Ópera, entraste a mi vida con un movimiento que nadie más podía ver.
+      Un sacrificio perfecto — y elegante — que me dejó sin defensas.
+    </div>
+    <button class="nav-btn" id="btn-hub" onclick="volverAlHub()">Volver al Universo</button>
+  </div>
+</div>
+
+<button id="exit-btn" onclick="volverAlHub()">← Universo</button>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════
+   CURSOR
+═══════════════════════════════════════ */
+const curEl  = document.getElementById('cur');
+const curDot = document.getElementById('cur-dot');
+window.addEventListener('mousemove', e => {
+  curEl.style.left  = e.clientX + 'px';
+  curEl.style.top   = e.clientY + 'px';
+  curDot.style.left = e.clientX + 'px';
+  curDot.style.top  = e.clientY + 'px';
+});
+
+/* ═══════════════════════════════════════
+   CANVAS DE FONDO — NOTACIÓN CAYENDO
+═══════════════════════════════════════ */
+const bgC   = document.getElementById('bg-canvas');
+const bgCtx = bgC.getContext('2d');
+const vcC   = document.getElementById('vc-canvas');
+const vcCtx = vcC.getContext('2d');
+let W = 0, H = 0;
+
+function resize() {
+  W = bgC.width = vcC.width = window.innerWidth;
+  H = bgC.height = vcC.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const NOTATION_POOL = [
+  'e4','e5','Nf3','Nc6','Bc4','Bc5','b4','Bxb4','c3','Ba5','d4','exd4',
+  'O-O','d3','Qb3','Qf6','Re1','Nge7','Ba3','Rb8','Qa4','Bb6','Nbd2',
+  'Ne4','Bxd3','Nf6+','gxf6','exf6','Rbe8','Qd5+','Kh8','Bxe7',
+  'Qb8+','Nxb8','Rd8#','♔','♕','♖','♗','♘','♚','♛','♜','♝','♞',
+];
+
+const COLS = Array.from({ length: 20 }, (_, i) => ({
+  x:    (i / 20) * window.innerWidth + Math.random() * 50 - 25,
+  y:    Math.random() * -window.innerHeight,
+  spd:  0.22 + Math.random() * 0.48,
+  chars:Array.from({ length: 8 }, () => NOTATION_POOL[Math.floor(Math.random() * NOTATION_POOL.length)]),
+  a:    0.03 + Math.random() * 0.05,
+  sz:   10   + Math.floor(Math.random() * 7),
+  gap:  23   + Math.random() * 9,
+}));
+
+const STARS = Array.from({ length: 130 }, () => ({
+  x: Math.random(), y: Math.random(),
+  r: 0.3 + Math.random() * 1.4,
+  tw: Math.random() * Math.PI * 2,
+  spd: 0.005 + Math.random() * 0.015,
+}));
+
+let vcPP = [];
+
+function spawnBurst(cx, cy) {
+  const palGold = [
+    'rgba(212,168,67,', 'rgba(245,200,80,', 'rgba(255,220,120,',
+    'rgba(180,130,40,', 'rgba(255,240,180,', 'rgba(245,235,200,',
+  ];
+  const n = 45 + Math.floor(Math.random() * 28);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2, spd = 2 + Math.random() * 9;
+    vcPP.push({
+      x: cx, y: cy,
+      vx: Math.cos(a) * spd, vy: Math.sin(a) * spd - 0.4,
+      r: 1.5 + Math.random() * 5,
+      life: 1, da: 0.01 + Math.random() * 0.02,
+      c: palGold[Math.floor(Math.random() * palGold.length)],
+      g: 0.055,
+      s: Math.random() < 0.4 ? 'diamond' : 'dot',
+    });
+  }
+}
+
+function drawDiamond(ctx, x, y, r, col) {
+  ctx.save(); ctx.fillStyle = col;
+  ctx.translate(x, y); ctx.rotate(Math.PI / 4);
+  ctx.beginPath(); ctx.rect(-r / 2, -r / 2, r, r);
+  ctx.fill(); ctx.restore();
+}
+
+function renderBg() {
+  bgCtx.fillStyle = 'rgba(8,6,4,.2)';
+  bgCtx.fillRect(0, 0, W, H);
+
+  // Notación cayendo
+  COLS.forEach(col => {
+    col.y += col.spd;
+    if (col.y > H + 120) {
+      col.y = -160;
+      col.chars = Array.from({ length: 8 }, () => NOTATION_POOL[Math.floor(Math.random() * NOTATION_POOL.length)]);
+    }
+    col.chars.forEach((ch, i) => {
+      const cy = col.y + i * col.gap;
+      if (cy < -20 || cy > H + 20) return;
+      const fade = 1 - i / col.chars.length;
+      bgCtx.globalAlpha = col.a * fade;
+      bgCtx.fillStyle   = '#D4A843';
+      bgCtx.font        = `${col.sz}px 'Cinzel', serif`;
+      bgCtx.textAlign   = 'center';
+      bgCtx.fillText(ch, col.x, cy);
+    });
+  });
+
+  // Estrellas
+  STARS.forEach(s => {
+    s.tw += s.spd;
+    bgCtx.globalAlpha = 0.07 + 0.2 * Math.abs(Math.sin(s.tw));
+    bgCtx.fillStyle = '#F5F0E8';
+    bgCtx.beginPath();
+    bgCtx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+    bgCtx.fill();
+  });
+  bgCtx.globalAlpha = 1;
+
+  // Partículas de victoria
+  vcCtx.clearRect(0, 0, W, H);
+  vcPP = vcPP.filter(p => p.life > 0);
+  vcPP.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    p.vy += p.g; p.life -= p.da;
+    const a = Math.max(0, p.life);
+    vcCtx.globalAlpha = a;
+    const col = p.c + a + ')';
+    if (p.s === 'diamond') drawDiamond(vcCtx, p.x, p.y, p.r * 2, col);
+    else {
+      vcCtx.fillStyle = col;
+      vcCtx.beginPath();
+      vcCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      vcCtx.fill();
+    }
+  });
+  vcCtx.globalAlpha = 1;
+
+  requestAnimationFrame(renderBg);
+}
+renderBg();
+
+/* ═══════════════════════════════════════
+   NAVEGACIÓN ENTRE FASES
+   goPhase(n) hace exactamente una cosa:
+   oculta la fase actual, muestra la nueva,
+   llama al init correspondiente.
+═══════════════════════════════════════ */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+let currentPhase = 0;
+
+function goPhase(n) {
+  // Bloquear si ya estamos ahí
+  if (n === currentPhase) return;
+  document.getElementById('ph' + currentPhase).classList.remove('active');
+  currentPhase = n;
+  document.getElementById('ph' + n).classList.add('active');
+  document.getElementById('exit-btn').style.display = n > 0 ? 'block' : 'none';
+
+  // Inits — cada uno es idempotente
+  if (n === 1) initPhase1();
+  if (n === 2) initPhase2();
+  if (n === 3) initPhase3();
+}
+
+/* ═══════════════════════════════════════
+   FASE 0 — INTRO
+═══════════════════════════════════════ */
+async function initPhase0() {
+  await sleep(500);
+  document.getElementById('ph0-meta').classList.add('lit');
+  await sleep(900);
+  document.getElementById('ph0-title').classList.add('lit');
+  await sleep(600);
+  document.getElementById('ph0-rule').classList.add('lit');
+  await sleep(400);
+  document.getElementById('ph0-sub').classList.add('lit');
+}
+initPhase0();
+
+/* ═══════════════════════════════════════
+   SISTEMA DE TABLERO
+   buildBoard(gridEl, stateMap, isInteractive)
+   stateMap: { index: { type, color } }
+   isInteractive: true → añade listener en cada celda
+═══════════════════════════════════════ */
+const FILES = ['a','b','c','d','e','f','g','h'];
+const RANKS = ['8','7','6','5','4','3','2','1'];
+
+function buildBoard(gridEl, stateMap, isInteractive) {
+  gridEl.innerHTML = '';
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const idx  = r * 8 + c;
+      const cell = document.createElement('div');
+      cell.className   = 'cell ' + ((r + c) % 2 === 0 ? 'light' : 'dark');
+      cell.dataset.idx = idx;
+
+      // Coordenadas
+      if (c === 7) {
+        const d = document.createElement('div');
+        d.className = 'coord rank';
+        d.textContent = RANKS[r];
+        cell.appendChild(d);
+      }
+      if (r === 7) {
+        const d = document.createElement('div');
+        d.className = 'coord file';
+        d.textContent = FILES[c];
+        cell.appendChild(d);
+      }
+
+      // Pieza
+      if (stateMap[idx]) {
+        const sp = document.createElement('span');
+        sp.className  = 'piece-' + stateMap[idx].color;
+        sp.textContent = stateMap[idx].type;
+        cell.appendChild(sp);
+      }
+
+      // Listener solo en tableros interactivos
+      if (isInteractive) {
+        cell.addEventListener('click', () => onPuzzleClick(idx, cell));
+      }
+
+      gridEl.appendChild(cell);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════
+   FASE 1 — ANIMACIÓN
+   Estado completamente local (animState).
+   No comparte variables con la fase 2.
+═══════════════════════════════════════ */
+// Posición inicial de la partida (antes del sacrificio de Reina)
+const ANIM_TEMPLATE = {
+   4: { type: '♚', color: 'black' },   // Rey negro e8
+  11: { type: '♞', color: 'black' },   // Caballo negro d7
+  12: { type: '♟', color: 'black' },   // Peón negro e7
+   5: { type: '♝', color: 'black' },   // Alfil negro f8
+  59: { type: '♖', color: 'white' },   // Torre blanca d1
+  26: { type: '♗', color: 'white' },   // Alfil blanco c4
+  33: { type: '♕', color: 'white' },   // Reina blanca b4
+};
+
+const STORY = [
+  {
+    counter:  'La Partida de la Ópera · Posición final',
+    notation: '...',
+    desc:     'París, 1858. Las piezas blancas han sacrificado material para atrapar al Rey. Morphy ve algo que nadie más puede ver.',
+    from: null, to: null,
+  },
+  {
+    counter:  'Movimiento 16 · Blancas',
+    notation: '♕b8+!!',
+    desc:     'El sacrificio de la Reina. Morphy entrega su pieza más poderosa sin dudar. La audiencia en la Ópera quedó sin aliento.',
+    from: 33, to: 1, capture: null,
+  },
+  {
+    counter:  'Movimiento 16 · Negras',
+    notation: '♞×b8',
+    desc:     'El caballo negro acepta la ofrenda — no hay alternativa. Pero la posición de las blancas sigue siendo absolutamente perfecta.',
+    from: 11, to: 1, capture: 1,
+  },
+  {
+    counter:  'Movimiento 17 · Blancas — Tu turno',
+    notation: '? ? ?',
+    desc:     'El Rey negro está atrapado en e8. El caballo bloquea en b8. ¿Ves el golpe final que Morphy vio en un instante?',
+    from: null, to: null, last: true,
+  },
+];
+
+// Estado mutable local a la fase 1
+let animState   = {};
+let storyIndex  = 0;
+let storyLocked = false;  // bloquea mientras la pieza se mueve
+let phase1Ready = false;
+
+function initPhase1() {
+  if (phase1Ready) return;  // idempotente: solo se inicializa una vez
+  phase1Ready = true;
+
+  // Clonar template
+  animState = {};
+  Object.entries(ANIM_TEMPLATE).forEach(([k, v]) => {
+    animState[parseInt(k)] = { type: v.type, color: v.color };
+  });
+
+  storyIndex  = 0;
+  storyLocked = false;
+
+  // Construir tablero de solo-lectura
+  buildBoard(document.getElementById('anim-board'), animState, false);
+
+  // Mostrar primer frame de narración
+  applyStoryFrame(STORY[0]);
+
+  // Activar botón "siguiente jugada"
+  document.getElementById('btn-next').classList.add('show');
+}
+
+function applyStoryFrame(frame) {
+  document.getElementById('move-counter').textContent     = frame.counter;
+  document.getElementById('notation-display').textContent = frame.notation;
+  document.getElementById('move-desc').textContent        = frame.desc;
+}
+
+async function playNextMove() {
+  if (storyLocked) return;
+  if (storyIndex >= STORY.length - 1) return;
+
+  storyIndex++;
+  storyLocked = true;
+
+  const btnNext   = document.getElementById('btn-next');
+  const btnPuzzle = document.getElementById('btn-puzzle');
+
+  // Deshabilitar visualmente durante la animación
+  btnNext.style.opacity       = '0.4';
+  btnNext.style.pointerEvents = 'none';
+
+  const frame = STORY[storyIndex];
+  applyStoryFrame(frame);
+
+  // Ejecutar movimiento si lo hay
+  if (frame.from !== null) {
+    await animatePiece(
+      document.getElementById('anim-board'),
+      animState,
+      frame.from,
+      frame.to,
+      frame.capture ?? null
+    );
+  }
+
+  if (frame.last) {
+    // Historia completa: ocultar btn-next, mostrar btn-puzzle
+    btnNext.classList.remove('show');
+    btnNext.style.display = 'none';
+    // btn-puzzle está en #ph1-cta, fuera del panel
+    btnPuzzle.classList.add('show');
+  } else {
+    // Reactivar botón
+    btnNext.style.opacity       = '1';
+    btnNext.style.pointerEvents = 'auto';
+  }
+
+  storyLocked = false;
+}
+
+async function animatePiece(gridEl, stateMap, fromIdx, toIdx, captureIdx) {
+  const cells    = gridEl.querySelectorAll('.cell');
+  const fromCell = cells[fromIdx];
+  const piece    = fromCell.querySelector('span');
+  if (!piece) return;
+
+  // Calcular desplazamiento en píxeles
+  const cellPx = gridEl.offsetWidth / 8;
+  const dx = ((toIdx % 8) - (fromIdx % 8)) * cellPx;
+  const dy = (Math.floor(toIdx / 8) - Math.floor(fromIdx / 8)) * cellPx;
+
+  // Permitir que la pieza salga de los límites de la celda
+  gridEl.style.overflow   = 'visible';
+  fromCell.style.overflow  = 'visible';
+  fromCell.style.zIndex    = '20';
+  fromCell.style.position  = 'relative';
+  piece.style.position     = 'relative';
+  piece.style.zIndex       = '20';
+  piece.style.display      = 'inline-flex';
+  piece.style.transition   = 'transform .62s cubic-bezier(.4,0,.2,1)';
+
+  await sleep(40);
+  piece.style.transform = `translate(${dx}px, ${dy}px)`;
+  await sleep(720);
+
+  // Actualizar estado y reconstruir grid
+  if (captureIdx !== null && stateMap[captureIdx]) delete stateMap[captureIdx];
+  stateMap[toIdx]   = stateMap[fromIdx];
+  delete stateMap[fromIdx];
+  buildBoard(gridEl, stateMap, false);
+}
+
+/* ═══════════════════════════════════════
+   FASE 2 — PUZZLE INTERACTIVO
+   Estado completamente local (puzzleState).
+   No comparte variables con la fase 1.
+═══════════════════════════════════════ */
+// Posición del puzzle: después de ♞×b8
+const PUZZLE_TEMPLATE = {
+   4: { type: '♚', color: 'black' },   // Rey negro e8
+   1: { type: '♞', color: 'black' },   // Caballo negro b8 (capturó la reina)
+  12: { type: '♟', color: 'black' },   // Peón negro e7
+   5: { type: '♝', color: 'black' },   // Alfil negro f8
+  59: { type: '♖', color: 'white' },   // Torre blanca d1 → debe ir a d8 ✓
+  26: { type: '♗', color: 'white' },   // Alfil blanco c4 (cubre f7)
+};
+
+// Movimiento ganador
+const WIN_FROM = 59;  // d1
+const WIN_TO   = 3;   // d8
+
+// Estado vivo del puzzle (se recrea al entrar en la fase)
+let puzzleState  = {};
+let puzzleSel    = null;   // índice de la celda seleccionada
+let puzzleSolved = false;
+
+function initPhase2() {
+  // Siempre recrear el estado para que el puzzle sea rejugable
+  puzzleState  = {};
+  Object.entries(PUZZLE_TEMPLATE).forEach(([k, v]) => {
+    puzzleState[parseInt(k)] = { type: v.type, color: v.color };
+  });
+  puzzleSel    = null;
+  puzzleSolved = false;
+
+  buildBoard(document.getElementById('puzzle-board'), puzzleState, true);
+}
+
+function onPuzzleClick(idx, cellEl) {
+  if (puzzleSolved) return;
+
+  const grid  = document.getElementById('puzzle-board');
+  const cells = grid.querySelectorAll('.cell');
+
+  // ── Caso A: completar el movimiento ganador ──────────
+  if (puzzleSel === WIN_FROM && idx === WIN_TO) {
+    puzzleSolved = true;
+
+    // Limpiar highlights
+    cells.forEach(c => c.classList.remove('selected', 'hint', 'wrong'));
+
+    // Mover Torre visualmente
+    cells[WIN_FROM].innerHTML = '';
+    const sp = document.createElement('span');
+    sp.className   = 'piece-white';
+    sp.textContent = '♖';
+    cells[WIN_TO].innerHTML = '';
+    cells[WIN_TO].appendChild(sp);
+    cells[WIN_TO].classList.add('last-move');
+
+    // Marcar rey en jaque
+    cells[4].style.background = 'rgba(160,40,28,.32)';
+
+    setTimeout(() => goPhase(3), 950);
+    return;
+  }
+
+  // ── Siempre limpiar el estado visual anterior ────────
+  cells.forEach(c => c.classList.remove('selected', 'hint', 'wrong'));
+  const prevSel = puzzleSel;
+  puzzleSel     = null;
+
+  // ── Caso B: seleccionar una pieza blanca ─────────────
+  if (puzzleState[idx] && puzzleState[idx].color === 'white') {
+    puzzleSel = idx;
+    cellEl.classList.add('selected');
+    // Pista: iluminar el destino solo si seleccionó la pieza correcta
+    if (idx === WIN_FROM) {
+      cells[WIN_TO].classList.add('hint');
+    }
+    return;
+  }
+
+  // ── Caso C: click incorrecto con pieza seleccionada ──
+  // (prevSel no es null → había una pieza escogida,
+  //  pero el destino no era WIN_TO)
+  if (prevSel !== null) {
+    cellEl.classList.add('wrong');
+    setTimeout(() => cellEl.classList.remove('wrong'), 380);
+  }
+}
+
+/* ═══════════════════════════════════════
+   FASE 3 — VICTORIA
+═══════════════════════════════════════ */
+async function initPhase3() {
+  localStorage.setItem('visited_ajedrez', 'true');
+
+  spawnBurst(window.innerWidth / 2, window.innerHeight * 0.35);
+
+  await sleep(300);
+  document.getElementById('mate-title').classList.add('show');
+
+  await sleep(900);
+  document.getElementById('victory-panel').classList.add('show');
+
+  // Typewriter de la frase
+  const phraseEl = document.getElementById('phrase-reveal');
+  phraseEl.classList.add('show');
+  const text = '\u201cSi le monde est contre toi,\u201d';
+  for (let i = 0; i <= text.length; i++) {
+    phraseEl.textContent = text.slice(0, i);
+    await sleep(52);
+  }
+
+  // Bursts periódicos durante 10 s
+  const iv = setInterval(() => {
+    spawnBurst(
+      window.innerWidth  * (0.15 + Math.random() * 0.7),
+      window.innerHeight * (0.08 + Math.random() * 0.5)
+    );
+  }, 1100);
+  setTimeout(() => clearInterval(iv), 10000);
+
+  await sleep(700);
+  document.getElementById('victory-msg').classList.add('show');
+  await sleep(600);
+  document.getElementById('btn-hub').classList.add('show');
+}
+
+/* ═══════════════════════════════════════
+   SALIDA
+═══════════════════════════════════════ */
+function volverAlHub() {
+  localStorage.setItem('visited_ajedrez', 'true');
+  document.body.classList.add('fade-out');
+  setTimeout(() => { window.location.href = 'Hub.html'; }, 1200);
+}
+</script>
+</body>
+</html>

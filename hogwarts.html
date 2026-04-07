@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Planeta Magia</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cinzel+Decorative:wght@400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Dancing+Script:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#010008;color:#F2E8D9;cursor:none;}
+body{opacity:0;}
+body.fade-out{opacity:0!important;transition:opacity 1.2s ease;}
+
+/* CURSOR */
+#cur{position:fixed;z-index:9999;pointer-events:none;width:10px;height:10px;border-radius:50%;background:rgba(120,190,255,.92);box-shadow:0 0 8px 3px rgba(100,180,255,.7),0 0 16px 6px rgba(60,140,255,.3);transform:translate(-50%,-50%);mix-blend-mode:screen;}
+#spark-c{position:fixed;inset:0;z-index:9998;pointer-events:none;}
+
+/* GRAIN */
+body::after{content:'';position:fixed;inset:0;z-index:300;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");opacity:.5;mix-blend-mode:overlay;}
+
+/* LETTERBOX */
+#lbt,#lbb{position:fixed;left:0;right:0;background:#000;z-index:290;pointer-events:none;height:6vh;}
+#lbt{top:0;}#lbb{bottom:0;}
+
+/* ESCENAS */
+.scene{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;visibility:hidden;}
+.scene.active{opacity:1;visibility:visible;pointer-events:auto;}
+.sc{position:absolute;inset:0;pointer-events:none;z-index:1;}
+.img-layer{position:absolute;inset:0;z-index:2;overflow:hidden;}
+.img-layer img{width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.05);transition:transform 10s ease-out,opacity 2s ease;}
+.img-layer img.ok{opacity:1;transform:scale(1);}
+.vig{position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at center,transparent 28%,rgba(1,0,8,.82) 100%),linear-gradient(to bottom,rgba(1,0,8,.68) 0%,transparent 22%,transparent 68%,rgba(1,0,8,.9) 100%);}
+
+/* TIPO */
+.ch{font-family:'Cinzel',serif;font-size:clamp(.65rem,1.2vw,.8rem);letter-spacing:.35em;text-transform:uppercase;color:rgba(230,185,80,.92);position:relative;z-index:10;margin-bottom:12px;text-shadow:0 0 14px rgba(205,155,60,.55),0 1px 4px rgba(0,0,0,.9);}
+.ch::before,.ch::after{content:'✦';margin:0 9px;opacity:.85;}
+.stitle{font-family:'Cinzel Decorative',serif;font-size:clamp(1.5rem,4.5vw,3rem);color:#F2E8D9;letter-spacing:.04em;text-shadow:0 0 38px rgba(205,155,60,.32),0 2px 18px rgba(0,0,0,.95);position:relative;z-index:10;text-align:center;margin-bottom:12px;line-height:1.2;}
+.sbody{font-family:'EB Garamond',Georgia,serif;font-style:italic;font-size:clamp(.95rem,2vw,1.3rem);color:rgba(242,232,217,.8);line-height:1.88;text-align:center;max-width:min(600px,86vw);position:relative;z-index:10;text-shadow:0 1px 14px rgba(0,0,0,.98);margin-bottom:28px;}
+.sep{font-family:'Cinzel',serif;font-size:.82rem;color:rgba(205,155,60,.38);letter-spacing:.3em;position:relative;z-index:10;margin-bottom:24px;}
+
+/* BOTÓN DORADO */
+.nbtn{position:relative;z-index:10;background:rgba(12,16,22,.68);backdrop-filter:blur(10px);border:1px solid rgba(205,155,60,.28);border-bottom:2px solid rgba(205,155,60,.82);color:#F2E8D9;padding:12px 28px;font-family:'Cinzel',serif;font-size:clamp(.72rem,1.4vw,.88rem);letter-spacing:.2em;text-transform:uppercase;cursor:none;transition:all .4s ease;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.65),inset 0 0 18px rgba(205,155,60,.08);text-shadow:0 0 8px rgba(255,255,255,.25);overflow:hidden;}
+.nbtn:hover{background:rgba(22,28,38,.88);color:#fff;border-color:rgba(205,155,60,1);box-shadow:0 0 28px rgba(205,155,60,.55),inset 0 0 22px rgba(205,155,60,.25);transform:translateY(-2px);}
+.nbtn::before{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:45%;height:2px;background:rgba(255,255,255,.75);box-shadow:0 0 14px 5px rgba(205,155,60,.88);opacity:.45;transition:all .4s;}
+.nbtn:hover::before{opacity:1;width:82%;}
+
+/* BOTÓN AZUL RAVENCLAW */
+.hs{font-family:'Cinzel',serif;font-size:clamp(.68rem,1.3vw,.86rem);letter-spacing:.14em;text-transform:uppercase;color:#fff;background:rgba(8,16,30,.68);backdrop-filter:blur(10px);border:1px solid rgba(100,170,255,.25);border-bottom:2px solid rgba(100,190,255,.82);padding:13px 22px;cursor:none;transition:all .4s ease;position:relative;overflow:hidden;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.65),inset 0 0 18px rgba(100,190,255,.07);text-shadow:0 0 8px rgba(255,255,255,.4);}
+.hs:hover{background:rgba(12,26,46,.88);color:#fff;border-color:rgba(140,210,255,1);box-shadow:0 0 30px rgba(100,190,255,.55),inset 0 0 25px rgba(100,190,255,.28);transform:translateY(-2px);}
+.hs::before{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:45%;height:2px;background:#fff;box-shadow:0 0 14px 6px rgba(100,190,255,.88);opacity:.55;transition:all .4s;}
+.hs:hover::before{opacity:1;width:82%;}
+
+/* SECRETOS — glass */
+.sec{position:absolute;z-index:7;pointer-events:none;opacity:0;text-align:center;max-width:clamp(160px,25vw,260px);background:rgba(8,6,20,.55);backdrop-filter:blur(12px);border:1px solid rgba(205,155,60,.18);border-radius:8px;padding:16px 20px;box-shadow:0 8px 32px rgba(0,0,0,.5),inset 0 0 12px rgba(205,155,60,.04);}
+.sec-h{font-family:'Cinzel',serif;font-size:clamp(.7rem,1.5vw,.9rem);letter-spacing:.12em;text-transform:uppercase;color:#CD9B3C;margin-bottom:6px;text-shadow:0 0 12px rgba(205,155,60,.65);}
+.sec-b{font-family:'EB Garamond',serif;font-style:italic;font-size:clamp(.8rem,1.6vw,.97rem);color:rgba(242,232,217,.8);line-height:1.55;}
+
+/* MODAL — glass premium */
+#modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);z-index:295;opacity:0;visibility:hidden;background:rgba(6,4,18,.82);backdrop-filter:blur(24px);border:1px solid rgba(205,155,60,.3);border-top:1px solid rgba(205,155,60,.55);border-radius:10px;padding:36px 40px;text-align:center;min-width:min(320px,86vw);max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.85),inset 0 0 0 1px rgba(255,255,255,.04),0 0 35px rgba(205,155,60,.15);}
+#modal.on{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1);transition:all .4s cubic-bezier(.175,.885,.32,1.275);}
+#mt{font-family:'Cinzel',serif;font-size:clamp(.82rem,1.8vw,1.05rem);letter-spacing:.22em;text-transform:uppercase;color:#CD9B3C;margin-bottom:16px;text-shadow:0 0 10px rgba(205,155,60,.4);}
+#mt::after{content:'';display:block;width:40px;height:1px;background:rgba(205,155,60,.35);margin:.85rem auto 0;box-shadow:0 0 8px rgba(205,155,60,.4);}
+#mb{font-family:'EB Garamond',serif;font-style:italic;font-size:clamp(1rem,2.2vw,1.3rem);color:rgba(242,232,217,.88);line-height:1.78;margin-bottom:24px;}
+#mc{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;background:rgba(12,10,28,.6);backdrop-filter:blur(8px);border:1px solid rgba(205,155,60,.28);border-radius:4px;color:rgba(205,155,60,.75);cursor:none;transition:all .3s;padding:9px 22px;}
+#mc:hover{color:#fff;background:rgba(205,155,60,.18);box-shadow:0 0 16px rgba(205,155,60,.4);}
+
+/* S1 */
+#s1-inner{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;padding:0 18px;}
+#hotspots{display:flex;gap:clamp(8px,2vw,22px);flex-wrap:wrap;justify-content:center;max-width:800px;}
+
+/* S2 LUMOS
+   img-layer z-index:2  → el GIF del pasillo
+   vig       z-index:3  → vignette encima del GIF
+   dark      z-index:8  → oscuridad que tapa todo
+   .sec      z-index:7  → visibles dentro del halo de luz  */
+#dark{position:absolute;inset:0;z-index:8;pointer-events:none;background:radial-gradient(circle 185px at var(--lx,-3000px) var(--ly,-3000px),transparent 0%,rgba(1,0,8,.97) 70%);}
+#dark::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle 280px at var(--lx,-3000px) var(--ly,-3000px),rgba(80,140,255,.06) 0%,transparent 65%);}
+#lhdr{position:absolute;top:8vh;left:50%;transform:translateX(-50%);z-index:9;text-align:center;pointer-events:none;}
+.ltit{font-family:'Cinzel Decorative',serif;font-size:clamp(.9rem,2vw,1.25rem);color:rgba(205,155,60,.62);letter-spacing:.06em;text-shadow:0 0 12px rgba(205,155,60,.3);}
+.lsub{font-family:'EB Garamond',serif;font-style:italic;font-size:clamp(.8rem,1.7vw,1rem);color:rgba(255,255,255,.3);margin-top:4px;}
+#sbar{position:absolute;bottom:9vh;left:50%;transform:translateX(-50%);z-index:9;pointer-events:none;font-family:'Cinzel',serif;font-size:clamp(.58rem,1.1vw,.72rem);letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.28);white-space:nowrap;}
+#s2 .nbtn{position:absolute;bottom:5.5vh;left:50%;transform:translateX(-50%);}
+
+/* S3 PENSADERO ══════════════════════════════════════ */
+/* Canvas del cuenco (reemplaza div#bowl) */
+#bowl-canvas{cursor:none;display:block;border-radius:50%;
+  box-shadow:0 0 45px rgba(100,200,255,.5),inset 0 0 22px rgba(255,255,255,.8);
+  transition:box-shadow .5s ease;}
+#bowl-canvas:hover{box-shadow:0 0 85px rgba(100,200,255,.85),inset 0 0 40px rgba(255,255,255,1);}
+
+/* Overlay de atmósfera de color por recuerdo */
+#atmo{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity 1.8s ease;}
+
+/* Canvas del efecto de inmersión */
+#dive-canvas{position:absolute;inset:0;z-index:11;pointer-events:none;opacity:0;}
+
+#pwrap{position:relative;z-index:10;cursor:none;display:flex;flex-direction:column;align-items:center;gap:15px;}
+#blbl{font-family:'Cinzel',serif;font-size:clamp(.58rem,1.1vw,.7rem);letter-spacing:.24em;text-transform:uppercase;color:rgba(173,216,230,.55);transition:color .8s ease;}
+#blbl.swirling{color:rgba(173,216,230,.9);text-shadow:0 0 12px rgba(100,200,255,.6);}
+
+/* Display de recuerdos */
+#mdsp{font-family:'EB Garamond',Georgia,serif;font-style:italic;
+  font-size:clamp(.95rem,2.3vw,1.38rem);
+  text-align:center;max-width:min(560px,86vw);line-height:1.82;
+  position:relative;z-index:10;min-height:3em;opacity:0;
+  text-shadow:0 0 18px currentColor;}
+
+/* Atmósferas */
+#atmo.mem-0{background:radial-gradient(ellipse at center,rgba(160,100,30,.42) 0%,rgba(80,40,10,.18) 60%,transparent 100%);}
+#atmo.mem-1{background:radial-gradient(ellipse at center,rgba(160,60,100,.38) 0%,rgba(80,20,50,.16) 60%,transparent 100%);}
+#atmo.mem-2{background:radial-gradient(ellipse at center,rgba(20,60,180,.42) 0%,rgba(10,20,80,.18) 60%,transparent 100%);}
+
+/* ── CARTA MANUSCRITA FINAL ─────────────────── */
+#carta-wrap{
+  position:absolute;inset:0;z-index:12;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+}
+#carta{
+  background:rgba(8,5,22,.78);
+  backdrop-filter:blur(18px);
+  border:1px solid rgba(205,155,60,.22);
+  border-top:1px solid rgba(205,155,60,.45);
+  border-radius:10px;
+  padding:clamp(28px,5vh,52px) clamp(24px,5vw,56px);
+  max-width:min(580px,88vw);
+  width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,.85),0 0 40px rgba(205,155,60,.1);
+  position:relative;
+}
+/* Ornamento superior de la carta */
+#carta::before{
+  content:'✦ ✦ ✦';position:absolute;top:16px;left:50%;transform:translateX(-50%);
+  font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.35em;
+  color:rgba(205,155,60,.4);white-space:nowrap;
+}
+#carta-saludo{
+  font-family:'Dancing Script',cursive;
+  font-size:clamp(1rem,2.2vw,1.3rem);
+  color:rgba(230,185,80,.85);
+  margin-bottom:18px;
+  opacity:0;
+}
+#carta-body{
+  font-family:'Dancing Script',cursive;
+  font-size:clamp(1.05rem,2.4vw,1.42rem);
+  color:rgba(242,232,217,.88);
+  line-height:1.88;
+  white-space:pre-wrap;
+  min-height:5em;
+  opacity:0;
+}
+#carta-frase{
+  font-family:'Dancing Script',cursive;
+  font-size:clamp(1.5rem,3.6vw,2.4rem);
+  color:#A0D2FF;
+  text-align:center;
+  margin-top:22px;
+  opacity:0;
+  text-shadow:0 0 28px rgba(80,160,255,.6),0 0 55px rgba(40,100,220,.25);
+  border-top:1px solid rgba(100,170,255,.2);
+  padding-top:18px;
+}
+/* Cursor de escritura */
+.caret{display:inline-block;width:2px;height:1.1em;background:rgba(205,155,60,.7);vertical-align:text-bottom;animation:caretBlink .7s step-end infinite;}
+@keyframes caretBlink{50%{opacity:0;}}
+
+/* EXIT */
+#xbtn{position:fixed;bottom:7vh;right:26px;z-index:280;background:none;border:none;font-family:'Cinzel',serif;font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(205,155,60,.45);cursor:none;display:none;transition:.3s;}
+#xbtn:hover{color:#e6c875;text-shadow:0 0 10px rgba(205,155,60,.6);}
+</style>
+</head>
+<body>
+
+<svg style="display:none;">
+  <filter id="water-ripple">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" result="noise">
+      <animate attributeName="baseFrequency" values="0.02;0.03;0.02" dur="10s" repeatCount="indefinite"/>
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<div id="cur"></div>
+<canvas id="spark-c"></canvas>
+<div id="lbt"></div>
+<div id="lbb"></div>
+<div id="modal"><div id="mt"></div><div id="mb"></div><button id="mc" onclick="cerrarModal()">Cerrar · ✦</button></div>
+<button id="xbtn" onclick="salir()">← Universo</button>
+
+<!-- S0: LA TORRE -->
+<div class="scene active" id="s0">
+  <canvas class="sc" id="c0"></canvas>
+  <div class="img-layer"><img src="hogwarts_night.gif" onload="this.classList.add('ok')" alt=""></div>
+  <div class="vig"></div>
+  <div class="ch gs-0">I · La Torre de Ravenclaw</div>
+  <h1 class="stitle gs-0">Hogwarts</h1>
+  <div class="sep gs-0">— ✦ —</div>
+  <p class="sbody gs-0">El castillo que reconoció tu mente mucho antes que cualquier persona.<br>El sombrero no tardó ni un instante.</p>
+  <button class="nbtn gs-0" onclick="ir(1)">Entrar al castillo</button>
+</div>
+
+<!-- S1: SALA COMÚN -->
+<div class="scene" id="s1">
+  <canvas class="sc" id="c1"></canvas>
+  <div class="img-layer"><img src="sala_comun.png" onload="this.classList.add('ok')" alt=""></div>
+  <div class="vig"></div>
+  <div id="s1-inner">
+    <div class="ch gs-1">II · Sala Común</div>
+    <h1 class="stitle gs-1">El Ingenio que Supera Toda Medida</h1>
+    <div id="hotspots" class="gs-1">
+      <button class="hs" onclick="abrirModal('La Aldaba del Águila','Solo las mentes más brillantes pueden responder su pregunta. Tú ya llevas la respuesta dentro — siempre la has tenido.')">La Aldaba del Águila</button>
+      <button class="hs" onclick="abrirModal('La Biblioteca','Estantes que alcanzan el techo estrellado. Tu mente es una biblioteca aún mayor — infinita, fascinante, y con alas propias para volar.')">La Biblioteca</button>
+      <button class="hs" onclick="abrirModal('El Techo de Cristal','Hechizado para imitar el cielo nocturno. Pero ninguna estrella allí arriba brilla tanto como tú cuando hablas de lo que amas.')">El Techo de Cristal</button>
+    </div>
+    <button class="nbtn gs-1" onclick="ir(2)" style="margin-top:36px;">Explorar los pasillos</button>
+  </div>
+</div>
+
+<!-- S2: PASILLOS / LUMOS
+     El GIF pasillo.gif está en img-layer (z-index:2)
+     #dark (z-index:8) lo cubre con la oscuridad
+     El halo del cursor horada esa oscuridad
+     Los .sec (z-index:7) aparecen dentro del halo -->
+<div class="scene" id="s2">
+  <canvas class="sc" id="c2"></canvas>
+  <div class="img-layer"><img src="pasillo.gif" onload="this.classList.add('ok')" alt=""></div>
+  <div class="vig"></div>
+  <div id="dark"></div>
+  <div id="lhdr" class="gs-2"><div class="ltit">Lumos</div><div class="lsub">Mueve la varita para revelar lo que se oculta...</div></div>
+  <div class="sec" id="sc1" style="top:18%;left:10%;"><div class="sec-h">Expecto Patronum</div><div class="sec-b">Porque tú eres la luz<br>que aleja mi oscuridad.</div></div>
+  <div class="sec" id="sc2" style="top:55%;right:12%;"><div class="sec-h">Mischief Managed</div><div class="sec-b">Juro solemnemente<br>que mis intenciones son amarte.</div></div>
+  <div class="sec" id="sc3" style="bottom:22%;left:26%;"><div class="sec-h">Amortentia</div><div class="sec-b">Si existiera la poción del amor,<br>olería exactamente a ti.</div></div>
+  <div class="sec" id="sc4" style="top:32%;right:14%;border-color:rgba(100,170,255,.25);">
+    <div class="sec-h" style="color:#7EB3FF;text-shadow:0 0 13px rgba(100,170,255,.65);font-family:'Dancing Script',cursive;font-size:1.3rem;text-transform:none;letter-spacing:.02em;">contre le monde.</div>
+    <div class="sec-b" style="color:rgba(180,210,255,.85);">Encuéntrame donde<br>la oscuridad termina.</div>
+  </div>
+  <div id="sbar" class="gs-2">0 de 3 secretos encontrados</div>
+  <button class="nbtn" id="btnp" onclick="ir(3)" style="opacity:0;pointer-events:none;">Al Pensadero</button>
+</div>
+
+<!-- S3: PENSADERO -->
+<div class="scene" id="s3">
+  <canvas class="sc" id="c3"></canvas>
+  <div class="vig"></div>
+  <!-- Atmósfera de color por recuerdo -->
+  <div id="atmo"></div>
+  <!-- Canvas del efecto de inmersión -->
+  <canvas id="dive-canvas"></canvas>
+
+  <div class="ch gs-3" style="position:relative;z-index:10;transition:opacity .8s ease;" id="s3ch">IV · El Pensadero</div>
+
+  <!-- El cuenco interactivo -->
+  <div id="pwrap" class="gs-3">
+    <canvas id="bowl-canvas"
+      width="230" height="75"
+      onmousedown="startSwirl(event)"
+      ontouchstart="startSwirl(event)">
+    </canvas>
+    <div id="blbl">Agita el agua para acceder al recuerdo...</div>
+  </div>
+
+  <!-- Recuerdos -->
+  <div id="mdsp"></div>
+
+  <!-- Carta final -->
+  <div id="carta-wrap">
+    <div id="carta">
+      <div id="carta-saludo"></div>
+      <div id="carta-body"></div>
+      <div id="carta-frase"></div>
+    </div>
+  </div>
+
+  <button class="nbtn" id="btnhub" onclick="salir()" style="position:relative;z-index:13;margin-top:36px;display:none;opacity:0;">Volver al Universo</button>
+</div>
+
+<script>
+// ══ CURSOR + CHISPAS ════════════════════════════════
+const curEl = document.getElementById('cur');
+const spkC  = document.getElementById('spark-c');
+const spkX  = spkC.getContext('2d');
+spkC.width  = innerWidth;
+spkC.height = innerHeight;
+window.addEventListener('resize', () => { spkC.width = innerWidth; spkC.height = innerHeight; });
+
+let mx = -200, my = -200;
+let sparks = [];
+
+function addSparks(x, y) {
+  const n = 2 + Math.floor(Math.random() * 3);
+  const cols = ['rgba(100,170,255,','rgba(140,205,255,','rgba(80,140,220,','rgba(200,230,255,','rgba(60,120,255,'];
+  for(let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = .5 + Math.random() * 2;
+    sparks.push({
+      x, y,
+      vx: Math.cos(a) * s,
+      vy: Math.sin(a) * s - .9,
+      r: .8 + Math.random() * 2.2,
+      life: 1,
+      dec: .03 + Math.random() * .04,
+      col: cols[Math.floor(Math.random() * cols.length)],
+      glow: Math.random() < .3,
+    });
+  }
+}
+
+function loopSparks() {
+  spkX.clearRect(0, 0, spkC.width, spkC.height);
+  sparks = sparks.filter(s => s.life > 0);
+  sparks.forEach(s => {
+    s.x += s.vx; s.y += s.vy;
+    s.vy += .04; s.vx *= .96;
+    s.life -= s.dec;
+    const a = Math.max(0, s.life);
+    spkX.save();
+    if(s.glow) { spkX.shadowColor = `rgba(100,180,255,${a})`; spkX.shadowBlur = 8; }
+    spkX.globalAlpha = a;
+    spkX.fillStyle = s.col + a + ')';
+    spkX.beginPath(); spkX.arc(s.x, s.y, s.r * (a * .5 + .5), 0, Math.PI*2); spkX.fill();
+    spkX.restore();
+  });
+  requestAnimationFrame(loopSparks);
+}
+loopSparks();
+
+window.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  curEl.style.left = mx + 'px';
+  curEl.style.top  = my + 'px';
+  addSparks(mx, my);
+  if(cur === 2) {
+    dk.style.setProperty('--lx', mx + 'px');
+    dk.style.setProperty('--ly', my + 'px');
+    chkProx(mx, my);
+  }
+});
+window.addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  mx = t.clientX; my = t.clientY;
+  curEl.style.left = mx + 'px'; curEl.style.top = my + 'px';
+  addSparks(mx, my);
+  if(cur === 2) {
+    dk.style.setProperty('--lx', mx + 'px');
+    dk.style.setProperty('--ly', my + 'px');
+    chkProx(mx, my);
+  }
+}, {passive:true});
+
+// ══ GSAP INIT ═══════════════════════════════════════
+gsap.to('body', {opacity:1, duration:1.5, ease:'power2.inOut'});
+gsap.fromTo('.gs-0', {y:20, opacity:0}, {y:0, opacity:1, duration:1.2, stagger:.2, ease:'power2.out', delay:.5});
+
+let cur = 0;
+const TAU = Math.PI * 2;
+let isTrans = false;
+
+function ir(n) {
+  if(isTrans) return;
+  isTrans = true;
+  gsap.to('#s' + cur, {opacity:0, duration:.8, onComplete: () => {
+    document.getElementById('s' + cur).classList.remove('active');
+    cur = n;
+    const nxt = document.getElementById('s' + n);
+    nxt.classList.add('active');
+    gsap.to(nxt, {opacity:1, duration:.8});
+    gsap.fromTo('.gs-' + n, {y:20, opacity:0}, {y:0, opacity:1, duration:1, stagger:.15, ease:'power3.out', delay:.2});
+    document.getElementById('xbtn').style.display = n > 0 ? 'block' : 'none';
+    if(n === 2) initLumos();
+    if(n === 3) initPensadero();
+    isTrans = false;
+  }});
+}
+
+// ══ CANVAS ATMOSFÉRICO ══════════════════════════════
+let W = innerWidth, H = innerHeight;
+const cvs = [0,1,2,3].map(i => {
+  const c = document.getElementById('c' + i); c.width = W; c.height = H;
+  return {c, x: c.getContext('2d')};
+});
+window.addEventListener('resize', () => {
+  W = innerWidth; H = innerHeight;
+  cvs.forEach(({c}) => { c.width = W; c.height = H; });
+});
+
+const STARS = Array.from({length:150}, () => ({
+  x:Math.random(), y:Math.random(), r:.3+Math.random()*1.5,
+  tw:Math.random()*TAU, spd:.008+Math.random()*.02,
+}));
+const CNDLS = Array.from({length:20}, () => ({
+  x:Math.random(), y:Math.random(), vy:(Math.random()-.5)*.0004,
+  sw:Math.random()*TAU, swS:.01+Math.random()*.015,
+  swA:.015+Math.random()*.025, fl:Math.random()*TAU,
+}));
+
+function rCanvas(x, skipStars) {
+  x.clearRect(0, 0, W, H);
+  if(!skipStars) {
+    STARS.forEach(s => {
+      s.tw += s.spd;
+      x.globalAlpha = .1 + .3 * Math.abs(Math.sin(s.tw));
+      x.fillStyle = '#fff'; x.beginPath(); x.arc(s.x*W, s.y*H, s.r, 0, TAU); x.fill();
+    });
+  }
+  x.globalAlpha = 1;
+  CNDLS.forEach(c => {
+    c.y += c.vy; c.sw += c.swS; c.fl += .18;
+    if(c.y < -.05) c.y = 1.05; if(c.y > 1.05) c.y = -.05;
+    const cx2 = (c.x + Math.sin(c.sw)*c.swA)*W, cy2 = c.y*H, fl = .72 + Math.sin(c.fl)*.28;
+    x.save(); x.translate(cx2, cy2);
+    x.fillStyle = 'rgba(240,232,212,.28)'; x.fillRect(-2,0,4,15);
+    const fg = x.createRadialGradient(0,-4,0,0,-4,8*fl);
+    fg.addColorStop(0,'rgba(255,255,200,.88)'); fg.addColorStop(.5,'rgba(255,140,40,.55)'); fg.addColorStop(1,'rgba(255,80,0,0)');
+    x.fillStyle = fg; x.beginPath(); x.arc(0,-4,8*fl,0,TAU); x.fill();
+    x.restore();
+  });
+  x.globalAlpha = 1;
+}
+
+(function loop() {
+  cvs.forEach(({c, x}, i) => { if(cur === i) rCanvas(x, i === 2); });
+  requestAnimationFrame(loop);
+})();
+
+// ══ MODAL ═══════════════════════════════════════════
+function abrirModal(t, b) {
+  document.getElementById('mt').textContent = t;
+  document.getElementById('mb').innerHTML   = b;
+  document.getElementById('modal').classList.add('on');
+}
+function cerrarModal() { document.getElementById('modal').classList.remove('on'); }
+
+// ══ LUMOS ═══════════════════════════════════════════
+const dk = document.getElementById('dark');
+const ZONES = [{id:'sc1',cx:.15,cy:.25},{id:'sc2',cx:.85,cy:.55},{id:'sc3',cx:.35,cy:.75}];
+let sfound = 0, lumosOn = false;
+
+function initLumos() {
+  sfound = 0; lumosOn = true;
+  gsap.set('.sec', {opacity:0, y:10});
+  gsap.set('#btnp', {opacity:0, pointerEvents:'none'});
+  document.getElementById('sbar').textContent = '0 de 3 secretos encontrados';
+  ZONES.forEach(z => document.getElementById(z.id).classList.remove('found'));
+}
+
+function chkProx(px, py) {
+  if(!lumosOn || cur !== 2) return;
+  ZONES.forEach(z => {
+    const el = document.getElementById(z.id);
+    if(el.classList.contains('found')) return;
+    if(Math.hypot(px - z.cx*W, py - z.cy*H) < 175) {
+      el.classList.add('found'); sfound++;
+      gsap.to(el, {opacity:1, y:0, duration:1.2, ease:'back.out(1.7)'});
+      document.getElementById('sbar').textContent =
+        sfound < 3 ? `${sfound} de 3 secretos encontrados` : '✦ Todos los secretos revelados ✦';
+      if(sfound >= 3) setTimeout(revealPhrase, 1200);
+    }
+  });
+}
+
+function revealPhrase() {
+  gsap.to('#sc4', {opacity:1, y:0, duration:1.6, ease:'power2.out'});
+  gsap.to('#btnp', {opacity:1, pointerEvents:'auto', duration:1, delay:1.8});
+}
+
+// ══ PENSADERO — SISTEMA COMPLETO ════════════════════
+const sl = ms => new Promise(r => setTimeout(r, ms));
+
+const P_MEMS = [
+  { atmo:'mem-0', color:'#F5D5A0', shadow:'rgba(180,120,40,.5)',
+    texto:'Recuerdo el momento exacto en que supe que quería conocerte más. No hubo alarmas, ni señales, ni relámpagos. Solo una certeza — tranquila, absoluta — instalándose sin pedir permiso.' },
+  { atmo:'mem-1', color:'#F5B8D0', shadow:'rgba(180,60,100,.5)',
+    texto:'Guardo como un tesoro tu risa cuando algo te parece genuinamente gracioso. No la risa educada, no la sonrisa de cortesía. La tuya. La que no pide permiso. Esa.' },
+  { atmo:'mem-2', color:'#A0C8F5', shadow:'rgba(40,100,200,.5)',
+    texto:'Mi mejor recuerdo no es un instante. Es la suma de todos — cada conversación, cada silencio cómodo, cada vez que el mundo parecía más pequeño y mejor simplemente porque estabas tú.' },
+];
+const C_SALUDO = 'Para ti, que encontraste cada secreto en la oscuridad...';
+const C_CUERPO = `Hay cosas que no caben en ecuaciones\nni en tableros de ajedrez,\nni en hechizos, ni en sinfonías.\n\nCosas que solo caben aquí —\nen este espacio que construimos\nentre los dos, sin mapa y sin brújula.\n\nSi el mundo se pusiera en contra,\nno cambiaría nada.\nTengo la respuesta más antigua\ny más simple de todas:`;
+const C_FRASE  = 'toi et moi contre le monde.';
+
+let pPhase=0, pSwirling=false, pAngleLast=null, pAccum=0, pIntensity=0;
+const NEED=360;
+
+// Bowl canvas
+const bC  = document.getElementById('bowl-canvas');
+const bX  = bC.getContext('2d');
+const BW  = bC.width, BH = bC.height;
+let bT    = 0;
+
+function drawBowl(){
+  bX.clearRect(0,0,BW,BH);
+  const cx=BW/2,cy=BH/2;
+  const bg=bX.createRadialGradient(cx,cy*.7,0,cx,cy,BW*.52);
+  bg.addColorStop(0,'rgba(210,240,255,.92)');
+  bg.addColorStop(.5,'rgba(90,175,220,.72)');
+  bg.addColorStop(1,'rgba(25,75,140,.45)');
+  bX.save(); bX.beginPath(); bX.ellipse(cx,cy,BW*.48,BH*.46,0,0,Math.PI*2);
+  bX.fillStyle=bg; bX.fill();
+  const wn=3+Math.floor(pIntensity*4);
+  for(let w=0;w<wn;w++){
+    const r=BW*.08+w*BW*.1, a=(.1+pIntensity*.3)*(1-w/(wn+1));
+    bX.beginPath(); bX.ellipse(cx,cy,r,r*.38,0,0,Math.PI*2);
+    bX.strokeStyle=`rgba(255,255,255,${a})`; bX.lineWidth=1+pIntensity*1.5; bX.stroke();
+  }
+  const gl=bX.createRadialGradient(cx,cy*.6,0,cx,cy,BW*.35);
+  gl.addColorStop(0,`rgba(255,255,255,${.12+pIntensity*.5})`);
+  gl.addColorStop(1,'rgba(255,255,255,0)');
+  bX.fillStyle=gl; bX.beginPath(); bX.ellipse(cx,cy,BW*.48,BH*.46,0,0,Math.PI*2); bX.fill();
+  bX.restore();
+  bC.style.boxShadow=`0 0 ${10+pIntensity*70}px rgba(100,200,255,${.45+pIntensity*.45}),inset 0 0 ${18+pIntensity*20}px rgba(255,255,255,${.68+pIntensity*.3})`;
+  bT+=.04+pIntensity*.06;
+}
+setInterval(drawBowl,16);
+
+function bowlCenter(){ const r=bC.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; }
+
+function startSwirl(e){
+  if(pSwirling || pPhase >= 4) return;
+  e.preventDefault();
+  pSwirling=true;
+  pAngleLast=null;
+  // Ya no reseteamos pAccum a 0 aquí, para que no pierda su progreso.
+  const bl=document.getElementById('blbl');
+  bl.classList.add('swirling');
+  bl.textContent='Sigue girando...';
+}
+
+function trackSwirl(px,py){
+  if(!pSwirling || cur!==3) return;
+  const c=bowlCenter(), angle=Math.atan2(py-c.y,px-c.x);
+  pIntensity=Math.min(1,pIntensity+.018);
+
+  if(pAngleLast!==null){
+    let d=angle-pAngleLast;
+    if(d>Math.PI) d-=2*Math.PI;
+    if(d<-Math.PI) d+=2*Math.PI;
+
+    pAccum+=Math.abs(d)*(180/Math.PI);
+    const pct=Math.min(100,Math.round(pAccum/NEED*100));
+
+    if(pct<100) document.getElementById('blbl').textContent=`${pct}%... sigue...`;
+    if(pAccum>=NEED){ 
+      pSwirling=false; 
+      ejecutarFase(); 
+    }
+  }
+  pAngleLast=angle;
+}
+
+function cancelSwirl(){
+  if(!pSwirling) return;
+  pSwirling=false; 
+  pAngleLast=null;
+  pIntensity=Math.max(0,pIntensity-.4);
+  // Eliminamos pAccum = 0 para que sea una experiencia agradable
+  const bl=document.getElementById('blbl');
+  bl.classList.remove('swirling');
+  
+  // Le mostramos en qué porcentaje se quedó para que sepa que puede continuar
+  if (pAccum > 0 && pAccum < NEED) {
+     bl.textContent=`Pausado al ${Math.round(pAccum/NEED*100)}%... haz clic y continúa.`;
+  } else {
+     bl.textContent='Agita el agua para acceder al recuerdo...';
+  }
+}
+
+window.addEventListener('mousemove',e=>{ if(cur===3) trackSwirl(e.clientX,e.clientY); });
+window.addEventListener('touchmove',e=>{ if(cur===3) trackSwirl(e.touches[0].clientX,e.touches[0].clientY); },{passive:false});
+window.addEventListener('mouseup', ()=>{ if(pSwirling&&pAccum<NEED) cancelSwirl(); });
+window.addEventListener('touchend',()=>{ if(pSwirling&&pAccum<NEED) cancelSwirl(); });
+
+// Dive canvas
+const dC  = document.getElementById('dive-canvas');
+const dX  = dC.getContext('2d');
+function resizeDive(){ dC.width=innerWidth; dC.height=innerHeight; }
+resizeDive(); window.addEventListener('resize',resizeDive);
+
+async function diveAnim(cb){
+  pIntensity=1;
+  gsap.to(dC,{opacity:1,duration:.3});
+  const cx=innerWidth/2,cy=innerHeight/2,maxR=Math.hypot(cx,cy)*1.1;
+  let p=0;
+  await new Promise(res=>{
+    function step(){
+      p+=.028; dX.clearRect(0,0,dC.width,dC.height);
+      dX.fillStyle=`rgba(1,0,8,${Math.min(.95,p*1.1)})`; dX.fillRect(0,0,dC.width,dC.height);
+      const r=p*maxR, a=Math.max(0,1-p*.8);
+      const rg=dX.createRadialGradient(cx,cy,r*.7,cx,cy,r);
+      rg.addColorStop(0,'rgba(100,200,255,0)');
+      rg.addColorStop(.7,`rgba(100,200,255,${a*.5})`);
+      rg.addColorStop(1,'rgba(100,200,255,0)');
+      dX.fillStyle=rg; dX.beginPath(); dX.arc(cx,cy,r,0,Math.PI*2); dX.fill();
+      p<1.15?requestAnimationFrame(step):res();
+    }
+    requestAnimationFrame(step);
+  });
+  if(cb) cb();
+}
+
+async function ejecutarFase(){
+  const fase=pPhase; pPhase++;
+
+  // LIMPIEZA VISUAL: Desvanecemos elementos suavemente antes de cargar los nuevos
+  gsap.to('#pwrap',{opacity:0,duration:.8,y:-20});
+  gsap.to('#s3ch',{opacity:0,duration:.8});
+  if(fase > 0) {
+    gsap.to('#mdsp',{opacity:0, duration:0.5}); 
+  }
+
+  if(fase<3){
+    document.getElementById('blbl').textContent='...';
+    await diveAnim();
+
+    const mem=P_MEMS[fase];
+    const atmo=document.getElementById('atmo');
+    const mdsp=document.getElementById('mdsp');
+
+    gsap.to(dC,{opacity:0,duration:.8});
+
+    atmo.className=''; await sl(50);
+    atmo.classList.add(mem.atmo);
+    gsap.to(atmo,{opacity:1,duration:1.2});
+
+    // Configuramos los textos ocultos
+    mdsp.style.color=mem.color;
+    mdsp.style.textShadow=`0 0 20px ${mem.shadow}`;
+    mdsp.textContent=`\u201c${mem.texto}\u201d`;
+
+    await sl(600);
+    gsap.to(mdsp,{opacity:1,duration:1.4}); // Aparece el nuevo recuerdo
+
+    await sl(2500); // Damos tiempo suficiente para que lo lea sin prisas
+
+    const bl=document.getElementById('blbl');
+    bl.textContent=fase<2?'Agita de nuevo para el siguiente recuerdo...':'Un último giro...';
+    bl.classList.remove('swirling');
+
+    gsap.to('#pwrap',{opacity:1,duration:.7,y:0});
+    gsap.to(atmo,{opacity:.35,duration:.8});
+    
+    // Atenuamos el texto para que quede flotando sutilmente de fondo
+    gsap.to(mdsp,{opacity:0.3,duration:1}); 
+
+    // Reiniciamos variables listas para el próximo giro
+    pAccum=0; pAngleLast=null; pSwirling=false; pIntensity=.2;
+
+  } else {
+    // CARTA FINAL
+    gsap.to(['#pwrap','#atmo','#mdsp'],{opacity:0,duration:.8});
+    await sl(900);
+    const wrap=document.getElementById('carta-wrap');
+    gsap.to(wrap,{opacity:1,duration:1.2});
+    const sal=document.getElementById('carta-saludo');
+    const bod=document.getElementById('carta-body');
+    const fra=document.getElementById('carta-frase');
+    await sl(400);
+    gsap.to(sal,{opacity:1,duration:1});
+    await typewrite(sal,C_SALUDO,36);
+    await sl(500);
+    gsap.to(bod,{opacity:1,duration:.8});
+    await typewrite(bod,C_CUERPO,20);
+    await sl(800);
+    gsap.to(fra,{opacity:1,duration:1.8,ease:'power2.out'});
+    await sl(200);
+    await typewrite(fra,C_FRASE,58);
+    gsap.to(fra,{textShadow:'0 0 50px rgba(80,160,255,.9),0 0 100px rgba(40,100,220,.5)',duration:.8,yoyo:true,repeat:3,ease:'power2.inOut',
+      onComplete:()=>{ fra.style.textShadow='0 0 28px rgba(80,160,255,.6),0 0 55px rgba(40,100,220,.25)'; }});
+    localStorage.setItem('visited_hogwarts','true');
+    await sl(2000);
+    const bh=document.getElementById('btnhub');
+    bh.style.display='block'; gsap.to(bh,{opacity:1,duration:1});
+  }
+}
+
+async function typewrite(el,text,speed){
+  el.innerHTML='';
+  const caret=document.createElement('span'); caret.className='caret';
+  for(let i=0;i<=text.length;i++){
+    el.textContent=text.slice(0,i); el.appendChild(caret);
+    await sl(speed+Math.random()*speed*.4);
+  }
+  caret.remove(); el.textContent=text;
+}
+
+function initPensadero(){
+  pPhase=0; pSwirling=false; pAccum=0; pAngleLast=null; pIntensity=0;
+  ['#mdsp','#carta-wrap','#btnhub'].forEach(s=>gsap.set(s,{opacity:0}));
+  document.getElementById('btnhub').style.display='none';
+  document.getElementById('mdsp').textContent='';
+  ['carta-saludo','carta-body','carta-frase'].forEach(id=>{ const el=document.getElementById(id); el.textContent=''; el.style.opacity='0'; });
+  const atmo=document.getElementById('atmo'); atmo.className=''; atmo.style.opacity='0';
+  dX.clearRect(0,0,dC.width,dC.height); dC.style.opacity='0';
+  document.getElementById('blbl').textContent='Agita el agua para acceder al recuerdo...';
+  document.getElementById('blbl').classList.remove('swirling');
+  document.getElementById('s3ch').style.opacity='1';
+  gsap.set('#pwrap',{opacity:0,y:0});
+  gsap.to('#pwrap',{opacity:1,duration:1,delay:.5});
+}
+
+function salir() {
+  localStorage.setItem('visited_hogwarts', 'true');
+  document.body.classList.add('fade-out');
+  setTimeout(() => { window.location.href = 'Hub.html'; }, 1200);
+}
+</script>
+</body>
+</html>

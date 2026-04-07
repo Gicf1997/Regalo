@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Planeta Mente · BI Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=Dancing+Script:wght@500;700&family=EB+Garamond:ital,wght@0,400;1,400&family=Quicksand:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#02050f;color:#fff;font-family:'Quicksand',sans-serif;}
+body{opacity:0;animation:fadeIn 1.5s forwards;}
+@keyframes fadeIn{to{opacity:1;}}
+body.fade-out{opacity:0!important;transition:opacity 1.2s ease;}
+canvas.bg-canvas{position:absolute;top:0;left:0;pointer-events:none;z-index:1;}
+body::after{content:'';position:fixed;inset:0;z-index:200;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity:.4;mix-blend-mode:overlay;}
+.glass{background:rgba(4,12,30,.58);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(137,247,254,.18);border-top:1px solid rgba(137,247,254,.38);box-shadow:0 15px 45px rgba(0,0,0,.75),inset 0 0 20px rgba(137,247,254,.04);border-radius:14px;}
+.kpi-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(137,247,254,.08);border:1px solid rgba(137,247,254,.28);color:#89f7fe;padding:5px 14px;border-radius:20px;font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;}
+.kpi-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:#89f7fe;box-shadow:0 0 6px #89f7fe;animation:blink .9s ease-in-out infinite alternate;}
+@keyframes blink{to{opacity:.3;}}
+.kpi-badge.gold{background:rgba(253,230,138,.08);border-color:rgba(253,230,138,.3);color:#fde68a;}
+.kpi-badge.gold::before{background:#fde68a;box-shadow:0 0 6px #fde68a;}
+.kpi-badge.rose{background:rgba(255,180,220,.08);border-color:rgba(255,180,220,.3);color:#ffb4dc;}
+.kpi-badge.rose::before{background:#ffb4dc;box-shadow:0 0 6px #ffb4dc;}
+.level{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity 1.2s ease;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.level.active{opacity:1;pointer-events:auto;}
+.dashboard-card{width:92%;max-width:820px;padding:clamp(22px,4vh,44px) clamp(18px,4vw,44px);display:flex;flex-direction:column;align-items:center;position:relative;}
+.chart-container{width:100%;height:32vh;min-height:220px;margin:18px 0;position:relative;}
+.story-title{font-family:'Cinzel Decorative',serif;font-size:clamp(1.4rem,3.2vw,2.3rem);color:#fff;text-shadow:0 0 22px rgba(137,247,254,.55);text-align:center;margin-bottom:6px;}
+.story-body{font-family:'EB Garamond',serif;font-style:italic;font-size:clamp(1rem,2vw,1.3rem);color:rgba(220,240,255,.88);text-align:center;line-height:1.68;margin-top:14px;}
+.divider{width:60px;height:1px;background:linear-gradient(90deg,transparent,rgba(137,247,254,.5),transparent);margin:14px auto;}
+.intro-quote{font-family:'Dancing Script',cursive;font-size:clamp(1.2rem,2.8vw,1.8rem);color:rgba(137,247,254,.85);text-align:center;line-height:1.8;max-width:600px;margin-top:10px;text-shadow:0 0 18px rgba(137,247,254,.3);}
+#kpi-520-wrap{display:flex;gap:clamp(10px,2.5vw,22px);flex-wrap:wrap;justify-content:center;width:100%;margin:16px 0;}
+.kpi-card{flex:1;min-width:130px;max-width:180px;background:rgba(8,20,45,.65);border:1px solid rgba(137,247,254,.15);border-top:2px solid rgba(137,247,254,.45);border-radius:10px;padding:16px 12px;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.55);}
+.kpi-card.gold-card{border-top-color:rgba(253,230,138,.7);border-color:rgba(253,230,138,.2);}
+.kpi-value{font-family:'Cinzel Decorative',serif;font-size:clamp(1.6rem,4vw,2.6rem);color:#89f7fe;text-shadow:0 0 20px rgba(137,247,254,.6);line-height:1;}
+.kpi-card.gold-card .kpi-value{color:#fde68a;text-shadow:0 0 20px rgba(253,230,138,.65);}
+.kpi-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.38);margin-top:6px;}
+#heart-wrap,#lissa-wrap{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;}
+#heart-canvas,#lissa-canvas{border-radius:8px;max-width:100%;}
+.eq-display,.lissa-eq{font-family:'Cinzel',serif;font-size:clamp(.62rem,1.2vw,.8rem);letter-spacing:.1em;text-align:center;line-height:1.8;}
+.eq-display{color:rgba(255,180,220,.62);}
+.lissa-eq{color:rgba(196,181,253,.55);}
+#eq-board{display:flex;align-items:center;justify-content:center;gap:clamp(12px,3vw,32px);flex-wrap:wrap;padding:32px 18px;border-radius:14px;background:rgba(137,247,254,.025);border:1px solid rgba(137,247,254,.1);width:100%;margin-top:18px;}
+.eq-token{opacity:0;transform:translateY(20px) scale(.9);transition:all 1s cubic-bezier(.175,.885,.32,1.275);}
+.eq-token.appear{opacity:1;transform:translateY(0) scale(1);}
+.eq-token.t,.eq-token.m{font-family:'Dancing Script',cursive;font-size:clamp(1.8rem,5vw,3.6rem);color:#fff;}
+.eq-token.t{text-shadow:0 0 25px #89f7fe,0 0 50px rgba(137,247,254,.5);}
+.eq-token.m{text-shadow:0 0 25px #c4b5fd,0 0 50px rgba(196,181,253,.5);}
+.eq-token.op{font-family:'Cinzel Decorative',serif;color:rgba(255,255,255,.38);font-size:clamp(1.3rem,3.5vw,2.5rem);}
+.eq-token.inf{font-family:'Cinzel Decorative',serif;color:#fde68a;font-size:clamp(2.2rem,6.5vw,4.6rem);text-shadow:0 0 35px rgba(253,230,138,.8),0 0 70px rgba(253,230,138,.35);}
+.nav-btn{position:absolute;bottom:clamp(16px,3vh,36px);left:50%;transform:translateX(-50%);z-index:10;background:rgba(137,247,254,.06);border:1px solid rgba(137,247,254,.28);color:rgba(137,247,254,.88);padding:11px 30px;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;border-radius:6px;cursor:pointer;transition:all .4s ease;backdrop-filter:blur(8px);white-space:nowrap;overflow:hidden;}
+.nav-btn:hover{background:rgba(137,247,254,.14);color:#fff;box-shadow:0 0 24px rgba(137,247,254,.38);border-color:rgba(137,247,254,.75);transform:translate(-50%,-2px);}
+.nav-btn::before{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:40%;height:1px;background:rgba(137,247,254,.5);box-shadow:0 0 8px rgba(137,247,254,.7);transition:width .4s;}
+.nav-btn:hover::before{width:75%;}
+#exit-btn{position:fixed;bottom:28px;right:28px;z-index:20;background:transparent;border:none;color:rgba(137,247,254,.38);font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:all .3s;}
+#exit-btn:hover{color:#89f7fe;text-shadow:0 0 10px rgba(137,247,254,.6);}
+</style>
+</head>
+<body>
+<canvas id="ocean-canvas" class="bg-canvas"></canvas>
+
+<div class="level active" id="lvl-0">
+  <div class="dashboard-card glass">
+    <div class="kpi-badge">Sistema iniciado &middot; Análisis en curso</div>
+    <h1 class="story-title">El Dashboard del Universo</h1>
+    <div class="divider"></div>
+    <p class="intro-quote">"Dicen que los números son fríos y exactos.<br>Pero cuando crucé los datos de mi vida,<br>los gráficos revelaron algo hermoso."</p>
+    <p class="story-body" style="margin-top:18px;font-size:clamp(.88rem,1.8vw,1.1rem);color:rgba(137,247,254,.45);">— Seis insights. Una conclusión inevitable. —</p>
+  </div>
+  <button class="nav-btn" onclick="nextLvl(1)">Ejecutar Análisis &rarr;</button>
+</div>
+
+<div class="level" id="lvl-1">
+  <div class="dashboard-card glass">
+    <div class="kpi-badge">Insight 01 &middot; Probabilidad y Dispersión</div>
+    <h1 class="story-title">El Outlier Perfecto</h1>
+    <div class="chart-container"><canvas id="chart1"></canvas></div>
+    <p class="story-body">En un universo con 8 mil millones de variables de ruido, la probabilidad de encontrarte tendía a cero. Eres la anomalía estadística que rompió mi modelo predictivo.</p>
+  </div>
+  <button class="nav-btn" onclick="nextLvl(2)">Siguiente Métrica &rarr;</button>
+</div>
+
+<div class="level" id="lvl-2">
+  <div class="dashboard-card glass">
+    <div class="kpi-badge">Insight 02 &middot; Análisis de Tendencia</div>
+    <h1 class="story-title">Crecimiento Exponencial</h1>
+    <div class="chart-container"><canvas id="chart2"></canvas></div>
+    <p class="story-body">El impacto en mi vida no sigue una proyección lineal. Es una curva que escapa de los ejes, desafiando cualquier límite preestablecido.</p>
+  </div>
+  <button class="nav-btn" onclick="nextLvl(3)">Procesar Proporción &rarr;</button>
+</div>
+
+<div class="level" id="lvl-3">
+  <div class="dashboard-card glass">
+    <div class="kpi-badge">Insight 03 &middot; Geometría Sagrada (&phi;)</div>
+    <h1 class="story-title">La Proporción Áurea</h1>
+    <div class="chart-container"><canvas id="chart3"></canvas></div>
+    <p class="story-body">1, 1, 2, 3, 5, 8, 13... La sucesión de Fibonacci. Al analizar a fondo descubrí que el caos converge — ambos mundos se entrelazan en la proporción perfecta.</p>
+  </div>
+  <button class="nav-btn" onclick="nextLvl(4)">Constante Descubierta &rarr;</button>
+</div>
+
+<div class="level" id="lvl-4">
+  <div class="dashboard-card glass">
+    <div class="kpi-badge gold">Insight 04 &middot; Constante Universal Descubierta</div>
+    <h1 class="story-title" style="text-shadow:0 0 22px rgba(253,230,138,.55);">La Constante 520</h1>
+    <div class="divider" style="background:linear-gradient(90deg,transparent,rgba(253,230,138,.5),transparent);"></div>
+    <div id="kpi-520-wrap">
+      <div class="kpi-card gold-card"><div class="kpi-value" id="kpi-val">0</div><div class="kpi-label">Constante C</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="font-size:clamp(1.2rem,3vw,2rem);">&phi; &middot; 321</div><div class="kpi-label">Derivación</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="font-size:clamp(1.1rem,2.5vw,1.7rem);color:#c4b5fd;text-shadow:0 0 18px rgba(196,181,253,.6);">&infin; %</div><div class="kpi-label">Confianza</div></div>
+    </div>
+    <div class="chart-container" style="height:24vh;min-height:180px;"><canvas id="chart4"></canvas></div>
+    <p class="story-body">El sistema detectó una constante que los libros nunca enseñan. En algunos idiomas, <em>520</em> suena exactamente como <span style="color:#fde68a;font-style:normal;">"te amo"</span> — y en el análisis de esta historia, aparece en cada tabla sin que nadie la pusiera.</p>
+  </div>
+  <button class="nav-btn" onclick="nextLvl(5)">Ver la Función Oculta &rarr;</button>
+</div>
+
+<div class="level" id="lvl-5">
+  <div class="dashboard-card glass">
+    <div class="kpi-badge rose">Insight 05 &middot; Curva Paramétrica No Documentada</div>
+    <h1 class="story-title" style="text-shadow:0 0 22px rgba(255,180,220,.5);">f(t) = Corazón</h1>
+    <div id="heart-wrap">
+      <canvas id="heart-canvas" width="300" height="260"></canvas>
+      <div class="eq-display">x(t) = 16 sin&sup3;(t) &nbsp;&middot;&nbsp; y(t) = 13 cos(t) &minus; 5 cos(2t) &minus; 2 cos(3t) &minus; cos(4t)</div>
+    </div>
+    <p class="story-body" style="margin-top:8px;">Hay funciones que los libros de texto nunca enseñan. Esta no aparece en ningún paper, pero cuando la grafiqué con tus datos como parámetro — el resultado fue este.</p>
+  </div>
+  <button class="nav-btn" id="btn5" onclick="nextLvl(6)" style="opacity:0;pointer-events:none;">Un Último Gráfico &rarr;</button>
+</div>
+
+<div class="level" id="lvl-6">
+  <div class="dashboard-card glass">
+    <div class="kpi-badge">Insight 06 &middot; Figuras de Lissajous &middot; Output Inesperado</div>
+    <h1 class="story-title">El Sistema Escribió Algo</h1>
+    <div id="lissa-wrap">
+      <canvas id="lissa-canvas" width="480" height="160"></canvas>
+      <div class="lissa-eq">x(t) = A sin(at + &delta;) &nbsp;|&nbsp; y(t) = B sin(bt) &nbsp;&rarr;&nbsp; <span style="color:#c4b5fd;">output = LOVE</span></div>
+    </div>
+    <p class="story-body" style="margin-top:8px;">Cuando el modelo terminó de procesar todos los datos, las figuras de Lissajous trazaron esto por sí solas. No lo programé. Lo encontré.</p>
+  </div>
+  <button class="nav-btn" id="btn6" onclick="nextLvl(7)" style="opacity:0;pointer-events:none;">Ver Conclusión Final &rarr;</button>
+</div>
+
+<div class="level" id="lvl-7">
+  <div class="dashboard-card glass">
+    <div class="kpi-badge">Output Final &middot; Q.E.D.</div>
+    <h1 class="story-title">Lo Que Queríamos Demostrar</h1>
+    <p class="story-body" style="font-size:clamp(.82rem,1.6vw,1rem);margin-top:0;color:rgba(137,247,254,.42);font-style:normal;letter-spacing:.08em;text-transform:uppercase;">Quod Erat Demonstrandum</p>
+    <div id="eq-board">
+      <span class="eq-token t" id="eqT">toi</span>
+      <span class="eq-token op" id="eqPlus">+</span>
+      <span class="eq-token m" id="eqM">moi</span>
+      <span class="eq-token op" id="eqEq">=</span>
+      <span class="eq-token inf" id="eqInf">&infin;</span>
+    </div>
+    <p class="story-body" style="margin-top:22px;">Los datos no mienten.<br>Y si el mundo se pusiera en contra,<br>la ecuación seguiría siendo exactamente la misma.</p>
+    <div class="divider" style="margin-top:16px;"></div>
+    <p style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.18em;color:rgba(255,255,255,.16);text-transform:uppercase;">Constante 520 &middot; &phi; = 1.618 &middot; f(toi,moi) = &infin; &middot; Confianza: &infin; %</p>
+  </div>
+  <button class="nav-btn" id="btn-exit-final" style="opacity:0;pointer-events:none;" onclick="volverAlHub()">Volver al Universo</button>
+</div>
+
+<button id="exit-btn" onclick="volverAlHub()">&larr; Universo</button>
+
+<script>
+Chart.defaults.color='rgba(255,255,255,.55)';
+Chart.defaults.font.family="'Quicksand',sans-serif";
+Chart.defaults.plugins.tooltip.backgroundColor='rgba(4,12,30,.92)';
+Chart.defaults.plugins.tooltip.borderColor='rgba(137,247,254,.45)';
+Chart.defaults.plugins.tooltip.borderWidth=1;
+let c1,c2,c3,c4;
+
+function initChart1(){
+  if(c1)c1.destroy();
+  const ctx=document.getElementById('chart1').getContext('2d');
+  const noise=Array.from({length:65},()=>({x:Math.random()*60,y:Math.random()*60,r:3+Math.random()*3}));
+  c1=new Chart(ctx,{type:'bubble',data:{datasets:[
+    {label:'Ruido del universo',data:noise,backgroundColor:'rgba(255,255,255,.07)',borderColor:'transparent'},
+    {label:'Tu (El Outlier)',data:[{x:88,y:88,r:14}],backgroundColor:'rgba(137,247,254,.82)',borderColor:'#fff',borderWidth:2,hoverRadius:18},
+  ]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:2500,easing:'easeOutElastic'},
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label}}},
+    scales:{x:{grid:{color:'rgba(255,255,255,.04)'},max:100,ticks:{color:'rgba(255,255,255,.3)'}},
+            y:{grid:{color:'rgba(255,255,255,.04)'},max:100,ticks:{color:'rgba(255,255,255,.3)'}}}
+  }});
+}
+
+function initChart2(){
+  if(c2)c2.destroy();
+  const ctx=document.getElementById('chart2').getContext('2d');
+  const data=Array.from({length:11},(_,i)=>+(Math.pow(1.62,i)).toFixed(2));
+  const grad=ctx.createLinearGradient(0,0,0,280);
+  grad.addColorStop(0,'rgba(137,247,254,.75)');grad.addColorStop(1,'rgba(196,181,253,.08)');
+  c2=new Chart(ctx,{type:'line',data:{labels:['T0','T1','T2','T3','T4','T5','T6','T7','T8','T9','Tinf'],
+    datasets:[{label:'Sentimiento',data,borderColor:'#89f7fe',backgroundColor:grad,borderWidth:2.5,tension:.42,fill:true,
+      pointBackgroundColor:'#fff',pointBorderColor:'#89f7fe',pointRadius:4,pointHoverRadius:8}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:2200,easing:'easeOutQuart'},
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:'rgba(255,255,255,.28)'}},y:{grid:{color:'rgba(255,255,255,.04)'},display:false}}}
+  });
+}
+
+function initChart3(){
+  if(c3)c3.destroy();
+  const ctx=document.getElementById('chart3').getContext('2d');
+  const cols=['rgba(137,247,254,.58)','rgba(102,166,255,.58)','rgba(196,181,253,.6)','rgba(255,180,220,.6)','rgba(253,230,138,.6)','rgba(137,247,254,.72)','rgba(196,181,253,.82)','rgba(255,255,255,.92)'];
+  c3=new Chart(ctx,{type:'polarArea',data:{labels:['1','1','2','3','5','8','13','phi'],
+    datasets:[{data:[1,1,2,3,5,8,13,21],backgroundColor:cols,borderColor:'rgba(4,12,30,.8)',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{animateRotate:true,animateScale:true,duration:2500},
+      plugins:{legend:{display:false}},scales:{r:{ticks:{display:false},grid:{color:'rgba(255,255,255,.05)'}}}}
+  });
+}
+
+function init520(){
+  const el=document.getElementById('kpi-val');
+  let v=0;const target=520,dur=1800,step=16,inc=target/(dur/step);
+  const iv=setInterval(()=>{v=Math.min(target,v+inc);el.textContent=Math.floor(v);if(v>=target){el.textContent=520;clearInterval(iv);}},step);
+  if(c4)c4.destroy();
+  const ctx=document.getElementById('chart4').getContext('2d');
+  const grad=ctx.createLinearGradient(0,0,0,200);
+  grad.addColorStop(0,'rgba(253,230,138,.45)');grad.addColorStop(1,'rgba(137,247,254,.15)');
+  c4=new Chart(ctx,{type:'radar',data:{
+    labels:['Inteligencia','Creatividad','Magia','Estrategia','Melodia','Phi Aurea'],
+    datasets:[{label:'Lana',data:[98,96,99,97,95,100],backgroundColor:grad,
+      borderColor:'rgba(253,230,138,.7)',borderWidth:2,
+      pointBackgroundColor:'#fde68a',pointBorderColor:'rgba(253,230,138,.5)',pointRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:2000},plugins:{legend:{display:false}},
+      scales:{r:{min:80,max:100,ticks:{display:false,stepSize:5},grid:{color:'rgba(253,230,138,.12)'},
+        angleLines:{color:'rgba(253,230,138,.1)'},
+        pointLabels:{color:'rgba(253,230,138,.65)',font:{size:11,family:'Cinzel'}}}}}
+  });
+}
+
+function initHeart(){
+  const canvas=document.getElementById('heart-canvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2+12;
+  const scale=Math.min(W,H)/38;
+  ctx.fillStyle='#000a1a';ctx.fillRect(0,0,W,H);
+  const points=[];const N=300;
+  for(let i=0;i<=N;i++){
+    const t=(i/N)*Math.PI*2;
+    points.push({x:cx+16*Math.pow(Math.sin(t),3)*scale,
+                 y:cy-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))*scale});
+  }
+  let idx=0;const btn=document.getElementById('btn5');
+  function draw(){
+    ctx.fillStyle='rgba(0,10,26,.18)';ctx.fillRect(0,0,W,H);
+    const i=idx%points.length;
+    const prev=points[(idx-1+points.length)%points.length];
+    const curr=points[i];
+    ctx.beginPath();ctx.moveTo(prev.x,prev.y);ctx.lineTo(curr.x,curr.y);
+    ctx.strokeStyle='rgba(255,100,170,1)';ctx.lineWidth=2.5;ctx.stroke();
+    const grd=ctx.createRadialGradient(curr.x,curr.y,0,curr.x,curr.y,10);
+    grd.addColorStop(0,'rgba(255,150,200,.9)');grd.addColorStop(1,'rgba(255,80,160,0)');
+    ctx.fillStyle=grd;ctx.beginPath();ctx.arc(curr.x,curr.y,10,0,Math.PI*2);ctx.fill();
+    if(Math.random()<.25){const px=curr.x+(Math.random()-.5)*14,py=curr.y+(Math.random()-.5)*14;
+      ctx.globalAlpha=Math.random()*.6;ctx.fillStyle='rgba(255,180,220,1)';
+      ctx.beginPath();ctx.arc(px,py,1+Math.random()*2,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+    idx++;
+    if(idx<points.length*2.5){requestAnimationFrame(draw);}
+    else{
+      ctx.fillStyle='rgba(0,10,26,.45)';ctx.fillRect(0,0,W,H);
+      ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
+      points.forEach(p=>ctx.lineTo(p.x,p.y));ctx.closePath();
+      const fg=ctx.createRadialGradient(cx,cy,0,cx,cy,scale*16);
+      fg.addColorStop(0,'rgba(255,80,160,.32)');fg.addColorStop(1,'rgba(255,80,160,.04)');
+      ctx.fillStyle=fg;ctx.fill();ctx.strokeStyle='rgba(255,120,180,.92)';ctx.lineWidth=2;ctx.stroke();
+      ctx.font='bold '+Math.floor(scale*2)+'px Quicksand';
+      ctx.fillStyle='rgba(255,180,220,.55)';ctx.textAlign='center';
+      ctx.fillText('f(t) = \u2665',cx,cy+scale*10);
+      btn.style.opacity='1';btn.style.pointerEvents='auto';
+    }
+  }
+  setTimeout(()=>requestAnimationFrame(draw),200);
+}
+
+function initLissa(){
+  const canvas=document.getElementById('lissa-canvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  ctx.fillStyle='#000a1a';ctx.fillRect(0,0,W,H);
+  const col='rgba(196,181,253,';
+  // L, O, V, E como trazos simples centrados en posiciones x
+  const LTRS=[
+    {type:'L',cx:65, cy:H/2,w:52,h:70},
+    {type:'O',cx:170,cy:H/2,w:52,h:68},
+    {type:'V',cx:278,cy:H/2,w:52,h:68},
+    {type:'E',cx:390,cy:H/2,w:52,h:70},
+  ];
+  const N=240;let step=0;const btn=document.getElementById('btn6');
+  function drawStep(){
+    ctx.fillStyle='rgba(0,10,26,.14)';ctx.fillRect(0,0,W,H);
+    const progress=Math.min(1,step/N);const pts=Math.floor(progress*N);
+    LTRS.forEach(L=>{
+      ctx.beginPath();
+      for(let i=0;i<pts;i++){
+        const t=(i/N)*Math.PI*2;
+        let px,py;
+        if(L.type==='O'){px=L.cx+Math.cos(t)*(L.w/2);py=L.cy+Math.sin(t)*(L.h/2);}
+        else if(L.type==='V'){px=L.cx+Math.sin(t)*(L.w/2);py=L.cy+Math.sin(2*t+Math.PI/2)*(L.h/2);}
+        else if(L.type==='L'){const s=i/pts;if(s<.6){px=L.cx-L.w*.22;py=L.cy-L.h/2+s/0.6*L.h;}else{px=L.cx-L.w*.22+(s-.6)/0.4*(L.w*.55);py=L.cy+L.h/2;}}
+        else{const s=i/pts;if(s<.25){px=L.cx-L.w*.28;py=L.cy-L.h/2+s/0.25*L.h;}
+          else if(s<.45){px=L.cx-L.w*.28+(s-.25)/0.2*L.w*.55;py=L.cy-L.h/2;}
+          else if(s<.65){px=L.cx-L.w*.28+(s-.45)/0.2*L.w*.48;py=L.cy;}
+          else{px=L.cx-L.w*.28+(s-.65)/0.35*L.w*.56;py=L.cy+L.h/2;}}
+        i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+      }
+      const t2=(pts/N)*Math.PI*2;
+      let hx=L.cx,hy=L.cy;
+      if(L.type==='O'){hx=L.cx+Math.cos(t2)*(L.w/2);hy=L.cy+Math.sin(t2)*(L.h/2);}
+      else if(L.type==='V'){hx=L.cx+Math.sin(t2)*(L.w/2);hy=L.cy+Math.sin(2*t2+Math.PI/2)*(L.h/2);}
+      ctx.strokeStyle=col+'0.82)';ctx.lineWidth=2;ctx.stroke();
+      const g=ctx.createRadialGradient(hx,hy,0,hx,hy,8);
+      g.addColorStop(0,'rgba(255,255,255,.7)');g.addColorStop(1,'rgba(196,181,253,0)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(hx,hy,8,0,Math.PI*2);ctx.fill();
+    });
+    step++;
+    if(step<N+60)requestAnimationFrame(drawStep);
+    else{btn.style.opacity='1';btn.style.pointerEvents='auto';}
+  }
+  setTimeout(()=>requestAnimationFrame(drawStep),150);
+}
+
+function startEquation(){
+  const ids=['eqT','eqPlus','eqM','eqEq','eqInf'];
+  const delays=[400,1000,1600,2200,3000];
+  ids.forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('appear'),delays[i]));
+  setTimeout(()=>{
+    const btn=document.getElementById('btn-exit-final');
+    btn.style.opacity='1';btn.style.pointerEvents='auto';
+    localStorage.setItem('visited_matematicas','true');
+  },5000);
+}
+
+let currentLvl=0;
+function nextLvl(n){
+  document.getElementById('lvl-'+currentLvl).classList.remove('active');
+  currentLvl=n;
+  document.getElementById('lvl-'+n).classList.add('active');
+  setTimeout(()=>{
+    if(n===1)initChart1();if(n===2)initChart2();if(n===3)initChart3();
+    if(n===4)init520();if(n===5)initHeart();if(n===6)initLissa();if(n===7)startEquation();
+  },400);
+}
+
+const oCvs=document.getElementById('ocean-canvas');
+const oCtx=oCvs.getContext('2d');
+let W,H,t=0;
+function resize(){W=oCvs.width=window.innerWidth;H=oCvs.height=window.innerHeight;}
+window.addEventListener('resize',resize);resize();
+const NODES=Array.from({length:42},()=>({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-.5)*.28,vy:(Math.random()-.5)*.28,r:Math.random()*2+.8}));
+function renderBg(){
+  t+=.01;oCtx.clearRect(0,0,W,H);
+  NODES.forEach((n,i)=>{
+    n.x+=n.vx;n.y+=n.vy;
+    if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;
+    oCtx.globalAlpha=.25;oCtx.fillStyle='rgba(137,247,254,1)';
+    oCtx.beginPath();oCtx.arc(n.x,n.y,n.r,0,Math.PI*2);oCtx.fill();
+    for(let j=i+1;j<NODES.length;j++){
+      const d=Math.hypot(n.x-NODES[j].x,n.y-NODES[j].y);
+      if(d<115){oCtx.globalAlpha=.1-d/1150;oCtx.strokeStyle='rgba(137,247,254,1)';
+        oCtx.lineWidth=.5;oCtx.beginPath();oCtx.moveTo(n.x,n.y);oCtx.lineTo(NODES[j].x,NODES[j].y);oCtx.stroke();}
+    }
+  });
+  oCtx.globalAlpha=1;
+  oCtx.beginPath();
+  for(let x=0;x<=W;x+=10){const y=H*.85+Math.sin(x*.005+t*2)*18+Math.sin(x*.02+t)*9;x===0?oCtx.moveTo(x,y):oCtx.lineTo(x,y);}
+  oCtx.strokeStyle='rgba(196,181,253,.12)';oCtx.lineWidth=2;oCtx.stroke();
+  requestAnimationFrame(renderBg);
+}
+renderBg();
+
+function volverAlHub(){
+  localStorage.setItem('visited_matematicas','true');
+  document.body.classList.add('fade-out');
+  setTimeout(()=>{window.location.href='Hub.html';},1000);
+}
+</script>
+</body>
+</html>

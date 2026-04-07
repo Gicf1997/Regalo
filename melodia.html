@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Planeta Melodía</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cinzel+Decorative:wght@400&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   BASE
+═══════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:#050408;color:#F5F0E8;
+  font-family:'Cinzel',serif;cursor:none;}
+body{opacity:0;animation:fadeIn 1.8s forwards;}
+@keyframes fadeIn{to{opacity:1;}}
+body.fade-out{opacity:0!important;transition:opacity 1.2s ease;}
+
+/* Cursor */
+#cur{position:fixed;z-index:9999;pointer-events:none;
+  width:18px;height:18px;transform:translate(-50%,-50%);}
+#cur::before,#cur::after{content:'';position:absolute;
+  background:rgba(180,200,255,.65);}
+#cur::before{width:100%;height:1px;top:50%;left:0;transform:translateY(-50%);}
+#cur::after{width:1px;height:100%;left:50%;top:0;transform:translateX(-50%);}
+
+/* Grain */
+body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity:.45;mix-blend-mode:overlay;}
+
+/* Letterbox */
+#lbt,#lbb{position:fixed;left:0;right:0;background:#000;
+  z-index:350;pointer-events:none;height:6vh;}
+#lbt{top:0;}#lbb{bottom:0;}
+
+/* Canvas fondo */
+#bg-canvas{position:fixed;top:0;left:0;z-index:0;pointer-events:none;}
+
+/* ═══════════════════════════════════════
+   FASES
+═══════════════════════════════════════ */
+.phase{position:fixed;inset:0;z-index:5;
+  opacity:0;pointer-events:none;transition:opacity 1.2s ease;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.phase.active{opacity:1;pointer-events:auto;}
+.phase:not(.active) button,.phase:not(.active) .btn{pointer-events:none!important;}
+
+/* ═══════════════════════════════════════
+   FASE 0 — INTRO
+═══════════════════════════════════════ */
+#ph0{text-align:center;padding:0 32px;gap:0;}
+
+#ph0-tag{font-size:clamp(.6rem,1.1vw,.72rem);letter-spacing:.38em;
+  text-transform:uppercase;color:rgba(150,180,255,.0);
+  margin-bottom:16px;transition:color 1.2s ease;}
+#ph0-tag.lit{color:rgba(150,180,255,.72);}
+
+#ph0-title{font-family:'Cinzel Decorative',serif;
+  font-size:clamp(1.8rem,5.5vw,4rem);
+  color:rgba(245,240,232,.0);line-height:1.18;margin-bottom:16px;
+  transition:color 1.5s ease,text-shadow 1.5s ease;}
+#ph0-title.lit{color:rgba(245,240,232,.95);
+  text-shadow:0 0 40px rgba(120,160,255,.35),0 2px 20px rgba(0,0,0,.98);}
+
+#ph0-author{font-family:'Playfair Display',serif;font-style:italic;
+  font-size:clamp(.9rem,2vw,1.3rem);
+  color:rgba(150,180,255,.0);margin-bottom:10px;
+  transition:color 1.2s ease .4s;}
+#ph0-author.lit{color:rgba(150,180,255,.65);}
+
+.ph0-rule{width:56px;height:1px;margin:16px auto 22px;
+  background:linear-gradient(90deg,transparent,rgba(150,180,255,.45),transparent);
+  opacity:0;transition:opacity 1.2s ease .7s;}
+.ph0-rule.lit{opacity:1;}
+
+#ph0-sub{font-family:'Playfair Display',serif;font-style:italic;
+  font-size:clamp(.88rem,1.8vw,1.15rem);
+  color:rgba(200,210,255,.0);max-width:460px;line-height:1.72;margin-bottom:48px;
+  transition:color 1.3s ease .6s;}
+#ph0-sub.lit{color:rgba(200,210,255,.58);}
+
+/* Keys hint */
+#keys-hint{font-size:clamp(.58rem,1vw,.7rem);letter-spacing:.18em;
+  color:rgba(255,255,255,.22);margin-bottom:18px;text-transform:uppercase;}
+
+/* ═══════════════════════════════════════
+   BOTÓN BASE
+═══════════════════════════════════════ */
+.btn{font-family:'Cinzel',serif;font-size:clamp(.7rem,1.3vw,.84rem);
+  letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(150,180,255,.82);
+  background:rgba(5,4,8,.72);backdrop-filter:blur(8px);
+  border:1px solid rgba(150,180,255,.22);
+  border-top:1px solid rgba(150,180,255,.45);
+  padding:11px 28px;cursor:none;border-radius:3px;
+  box-shadow:0 4px 20px rgba(0,0,0,.7),inset 0 0 14px rgba(150,180,255,.04);
+  transition:all .4s ease;overflow:hidden;position:relative;
+  opacity:0;pointer-events:none;}
+.btn.show{opacity:1;pointer-events:auto;}
+.btn:hover{color:#F5F0E8;background:rgba(10,8,20,.88);
+  border-color:rgba(150,180,255,.75);
+  box-shadow:0 0 22px rgba(100,140,255,.35),0 6px 28px rgba(0,0,0,.8);
+  transform:translateY(-2px);}
+.btn::after{content:'';position:absolute;bottom:0;left:50%;
+  transform:translateX(-50%);width:35%;height:1px;
+  background:rgba(150,180,255,.55);
+  box-shadow:0 0 8px 2px rgba(100,140,255,.55);
+  opacity:.4;transition:all .4s;}
+.btn:hover::after{opacity:1;width:76%;}
+
+/* ═══════════════════════════════════════
+   FASE 1 — JUEGO PIANO TILES
+═══════════════════════════════════════ */
+#ph1{padding:0;justify-content:flex-start;}
+
+/* HUD superior */
+#hud{
+  position:absolute;top:7vh;left:50%;transform:translateX(-50%);
+  z-index:20;display:flex;align-items:center;gap:clamp(16px,3vw,36px);
+  pointer-events:none;
+}
+#hud-score{font-family:'Cinzel Decorative',serif;
+  font-size:clamp(1.2rem,3vw,2rem);color:rgba(200,220,255,.88);
+  text-shadow:0 0 18px rgba(100,160,255,.4);min-width:4ch;text-align:center;}
+#hud-combo{font-size:clamp(.6rem,1.2vw,.75rem);letter-spacing:.22em;
+  color:rgba(150,180,255,.55);text-align:center;min-width:80px;
+  transition:color .3s;}
+#hud-combo.active{color:rgba(180,210,255,.9);}
+
+/* Barra de progreso */
+#progress-bar-wrap{
+  position:absolute;bottom:7.2vh;left:50%;transform:translateX(-50%);
+  z-index:20;width:min(400px,70vw);pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+#progress-track{width:100%;height:2px;background:rgba(255,255,255,.08);border-radius:1px;}
+#progress-fill{height:100%;width:0%;background:rgba(150,180,255,.5);
+  border-radius:1px;transition:width .5s linear;
+  box-shadow:0 0 6px rgba(100,160,255,.5);}
+#progress-label{font-size:.58rem;letter-spacing:.2em;
+  color:rgba(255,255,255,.2);text-transform:uppercase;}
+
+/* Contenedor del juego */
+#game-area{
+  position:absolute;
+  top:14vh;bottom:14vh;
+  left:50%;transform:translateX(-50%);
+  width:min(480px,96vw);
+  overflow:hidden;
+}
+
+/* 4 lanes */
+#lanes{position:absolute;inset:0;display:flex;}
+.lane{
+  flex:1;position:relative;
+  border-right:1px solid rgba(255,255,255,.04);
+  transition:background .12s;
+}
+.lane:last-child{border-right:none;}
+.lane.flash{background:rgba(150,180,255,.12)!important;}
+.lane.miss-flash{background:rgba(200,60,60,.10)!important;}
+
+/* Colores de lane muy sutiles */
+.lane:nth-child(1){background:rgba(80,100,180,.04);}
+.lane:nth-child(2){background:rgba(100,130,220,.03);}
+.lane:nth-child(3){background:rgba(100,130,220,.03);}
+.lane:nth-child(4){background:rgba(80,100,180,.04);}
+
+/* Hit zone line */
+#hit-line{
+  position:absolute;
+  left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(150,180,255,.45),rgba(150,180,255,.45),transparent);
+  box-shadow:0 0 10px rgba(100,160,255,.35);
+  z-index:15;pointer-events:none;
+}
+
+/* Teclas visuales en la hit zone */
+#key-row{
+  position:absolute;left:0;right:0;height:52px;
+  display:flex;z-index:14;pointer-events:none;
+}
+.key-cap{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  font-size:.58rem;letter-spacing:.15em;color:rgba(255,255,255,.18);
+  border-right:1px solid rgba(255,255,255,.05);
+  background:rgba(0,0,0,.25);
+  transition:background .1s;
+}
+.key-cap:last-child{border-right:none;}
+.key-cap.pressed{background:rgba(150,180,255,.15);}
+
+/* Tiles */
+.tile{
+  position:absolute;
+  border-radius:4px;
+  background:linear-gradient(180deg,rgba(130,165,255,.92) 0%,rgba(80,120,220,.88) 100%);
+  box-shadow:0 0 12px rgba(100,150,255,.5),inset 0 1px 0 rgba(255,255,255,.2);
+  transition:none;
+  z-index:10;
+}
+.tile.perfect{
+  background:linear-gradient(180deg,rgba(212,200,100,.95) 0%,rgba(180,150,40,.9) 100%);
+  box-shadow:0 0 18px rgba(212,180,60,.7);
+}
+
+/* Feedback text float */
+.feedback{
+  position:absolute;z-index:30;
+  font-family:'Cinzel',serif;font-size:clamp(.75rem,1.5vw,.95rem);
+  letter-spacing:.15em;pointer-events:none;
+  animation:floatUp .7s ease forwards;
+}
+.feedback.perfect{color:rgba(255,220,80,.95);
+  text-shadow:0 0 12px rgba(255,200,50,.6);}
+.feedback.good{color:rgba(180,200,255,.85);}
+.feedback.miss{color:rgba(220,80,80,.75);}
+@keyframes floatUp{
+  0%{opacity:1;transform:translateY(0);}
+  100%{opacity:0;transform:translateY(-55px);}
+}
+
+/* Milestone overlay */
+#milestone{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:25;text-align:center;pointer-events:none;
+  opacity:0;transition:opacity .8s ease;
+}
+#milestone.show{opacity:1;}
+#milestone.hide{opacity:0;}
+
+/* FIX: Agregar white-space: pre-wrap para que se respeten los saltos de línea (\n) */
+#milestone-text{font-family:'Playfair Display',serif;font-style:italic;
+  font-size:clamp(.9rem,2vw,1.25rem); white-space: pre-wrap; 
+  color:rgba(200,215,255,.8);max-width:340px;line-height:1.65;
+  text-shadow:0 1px 12px rgba(0,0,0,.95);}
+
+/* ═══════════════════════════════════════
+   FASE 2 — COMPLETION
+═══════════════════════════════════════ */
+#ph2{text-align:center;padding:0 32px;}
+
+#ph2-score-wrap{margin-bottom:24px;}
+#ph2-score-label{font-size:clamp(.6rem,1.2vw,.72rem);letter-spacing:.28em;
+  text-transform:uppercase;color:rgba(150,180,255,.5);margin-bottom:6px;}
+#ph2-score-num{font-family:'Cinzel Decorative',serif;
+  font-size:clamp(2rem,6vw,4rem);color:rgba(200,220,255,.92);
+  text-shadow:0 0 28px rgba(100,160,255,.45);}
+#ph2-accuracy{font-size:clamp(.62rem,1.2vw,.75rem);letter-spacing:.18em;
+  color:rgba(200,215,255,.45);margin-top:4px;}
+
+.ph2-rule{width:40px;height:1px;margin:22px auto;
+  background:linear-gradient(90deg,transparent,rgba(150,180,255,.4),transparent);}
+
+/* FIX: white-space: pre-wrap para saltos de línea */
+#ph2-phrase{font-family:'Playfair Display',serif;font-style:italic;
+  font-size:clamp(1.1rem,3vw,1.85rem); white-space: pre-wrap; 
+  color:rgba(200,220,255,.92);line-height:1.55;
+  text-shadow:0 0 20px rgba(100,160,255,.35);}
+#ph2-sub{font-family:'Playfair Display',serif;font-style:italic;
+  font-size:clamp(.85rem,1.7vw,1.08rem); white-space: pre-wrap; 
+  color:rgba(200,215,255,.45);margin-top:12px;max-width:420px;}
+
+/* Exit */
+#exit-btn{position:fixed;top:24px;left:24px;z-index:30;
+  background:none;border:none;font-family:'Cinzel',serif;font-size:.62rem;
+  letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(150,180,255,.28);cursor:none;display:none;transition:.3s;}
+#exit-btn:hover{color:rgba(150,180,255,.72);}
+</style>
+</head>
+<body>
+
+<audio id="song" src="yiruma.mp3" preload="auto"></audio>
+
+<div id="cur"></div>
+<div id="lbt"></div>
+<div id="lbb"></div>
+<canvas id="bg-canvas"></canvas>
+
+<div class="phase active" id="ph0">
+  <div id="ph0-tag">V · Planeta Melodía</div>
+  <div id="ph0-title">River Flows in You</div>
+  <div id="ph0-author">Yiruma, 2001</div>
+  <div class="ph0-rule"></div>
+  <div id="ph0-sub">Una canción que no necesita letra para decirlo todo.</div>
+  <div id="keys-hint">D · F · J · K &nbsp;—&nbsp; o toca las columnas</div>
+  <button class="btn show" id="btn-start" onclick="startGame()">Comenzar</button>
+</div>
+
+<div class="phase" id="ph1">
+
+  <div id="hud">
+    <div id="hud-score">0</div>
+    <div id="hud-combo"></div>
+  </div>
+
+  <div id="game-area">
+    <div id="lanes">
+      <div class="lane" id="lane-0"></div>
+      <div class="lane" id="lane-1"></div>
+      <div class="lane" id="lane-2"></div>
+      <div class="lane" id="lane-3"></div>
+    </div>
+    <div id="hit-line"></div>
+    <div id="key-row">
+      <div class="key-cap" id="kc-0">D</div>
+      <div class="key-cap" id="kc-1">F</div>
+      <div class="key-cap" id="kc-2">J</div>
+      <div class="key-cap" id="kc-3">K</div>
+    </div>
+    <div id="milestone"><div id="milestone-text"></div></div>
+  </div>
+
+  <div id="progress-bar-wrap">
+    <div id="progress-track"><div id="progress-fill"></div></div>
+    <div id="progress-label">River Flows in You</div>
+  </div>
+
+</div>
+
+<div class="phase" id="ph2">
+  <div id="ph2-score-wrap">
+    <div id="ph2-score-label">Puntuación final</div>
+    <div id="ph2-score-num">0</div>
+    <div id="ph2-accuracy"></div>
+  </div>
+  <div class="ph2-rule"></div>
+  <div id="ph2-phrase"></div>
+  <div id="ph2-sub"></div>
+  <br>
+  <button class="btn" id="btn-hub" onclick="volverAlHub()">Volver al Universo</button>
+</div>
+
+<button id="exit-btn" onclick="volverAlHub()">← Universo</button>
+
+<script>
+'use strict';
+
+/* ════════════════════════════════════════
+   CURSOR
+════════════════════════════════════════ */
+const curEl = document.getElementById('cur');
+window.addEventListener('mousemove', e => {
+  curEl.style.left = e.clientX + 'px';
+  curEl.style.top  = e.clientY + 'px';
+});
+
+/* ════════════════════════════════════════
+   FONDO — ONDAS DE AGUA
+════════════════════════════════════════ */
+const bgC   = document.getElementById('bg-canvas');
+const bgCtx = bgC.getContext('2d');
+let BW = 0, BH = 0;
+
+function resizeBg() {
+  BW = bgC.width  = window.innerWidth;
+  BH = bgC.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeBg);
+resizeBg();
+
+let ripples = [];
+function addRipple(x, y) {
+  ripples.push({ x, y, r: 0, max: 80 + Math.random() * 60, a: 0.35 });
+}
+
+const NOTES = Array.from({ length: 18 }, () => ({
+  x: Math.random(), y: Math.random(),
+  vy: -(0.06 + Math.random() * 0.12) / 1000,
+  sym: ['♩','♪','♫','♬'][Math.floor(Math.random() * 4)],
+  a: 0.03 + Math.random() * 0.06,
+  sz: 11 + Math.floor(Math.random() * 9),
+}));
+
+function renderBg() {
+  bgCtx.fillStyle = 'rgba(5,4,8,.22)';
+  bgCtx.fillRect(0, 0, BW, BH);
+
+  NOTES.forEach(n => {
+    n.y += n.vy;
+    if (n.y < -0.05) n.y = 1.05;
+    bgCtx.globalAlpha = n.a;
+    bgCtx.fillStyle   = 'rgba(150,180,255,1)';
+    bgCtx.font        = `${n.sz}px serif`;
+    bgCtx.textAlign   = 'center';
+    bgCtx.fillText(n.sym, n.x * BW, n.y * BH);
+  });
+
+  ripples = ripples.filter(r => r.a > 0);
+  ripples.forEach(r => {
+    r.r += 1.8;
+    r.a -= 0.008;
+    bgCtx.globalAlpha = Math.max(0, r.a);
+    bgCtx.strokeStyle = `rgba(120,160,255,${r.a})`;
+    bgCtx.lineWidth   = 1.5;
+    bgCtx.beginPath();
+    bgCtx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+    bgCtx.stroke();
+    
+    bgCtx.globalAlpha = Math.max(0, r.a * 0.4);
+    bgCtx.beginPath();
+    bgCtx.arc(r.x, r.y, r.r * 0.6, 0, Math.PI * 2);
+    bgCtx.stroke();
+  });
+
+  bgCtx.globalAlpha = 1;
+  requestAnimationFrame(renderBg);
+}
+renderBg();
+
+/* ════════════════════════════════════════
+   CONFIGURACIÓN DEL JUEGO
+════════════════════════════════════════ */
+const AUDIO_OFFSET  = 0;
+const FALL_DURATION = 1800;
+const HIT_PERFECT   = 35;
+const HIT_GOOD      = 65;
+const SONG_DURATION = 214000;
+
+const MILESTONES = [
+  [0.12, 'River Flows in You\nYiruma · 2001'],
+  [0.35, 'Yiruma empezó a estudiar piano a los 7 años.\nTú ya sabes por qué lo escuchas.'],
+  [0.60, 'Esta canción ha sonado de fondo\nen mil momentos tuyos.'],
+  [0.82, 'El Royal College of Music.\nEl Berklee College. Seúl.\nY tu playlist.'],
+];
+
+const TILE_MAP = [
+  [3200,1],[5800,2],[8200,1],[10500,3],[12200,0],[13000,2],
+  [13800,2],[14700,1],[15600,3],[16500,2],[17400,1],[18300,3],
+  [19200,0],[20100,2],[21000,1],[21900,3],[22800,2],[23700,1],
+  [24600,3],[25500,0],[26400,2],[27300,1],[28500,3],[29400,2],
+  [30300,1],[31200,3],[32100,2],[33000,1],[33900,3],[34800,0],
+  [35700,2],[36600,1],[37500,3],[38400,2],[39300,1],[40200,3],
+  [41100,0],[42000,2],[43200,1],[44000,3],[44800,2],[45600,1],
+  [46400,3],[47200,0],[48000,2],[48800,1],[49600,3],[50400,2],
+  [51200,1],[52000,3],[53000,0],[54000,2],[55000,1],[56000,3],
+  [57000,2],[58500,1],[59500,3],[60500,2],[61200,3],[61900,1],
+  [62800,2],[63500,3],[64200,1],[65000,2],[65700,0],[66500,3],
+  [67200,2],[68000,1],[68800,3],[69600,2],[70400,1],[71200,3],
+  [72000,0],[72800,2],[73600,1],[74400,3],[75200,2],[76000,2],
+  [76700,3],[77500,1],[78300,2],[79100,3],[79900,1],[80700,2],
+  [81500,3],[82300,0],[83200,2],[84000,1],[84800,3],[85600,2],
+  [86400,1],[87200,3],[88000,0],[88800,2],[89600,1],[90400,3],
+  [91200,2],[92000,1],[92800,3],[93600,2],[94400,1],[95500,3],
+  [96500,2],[97500,1],[98500,3],[99500,2],[100500,1],[101500,3],
+  [102500,0],[103500,2],[104500,1],[105500,3],[106500,2],[107500,1],
+  [108500,3],[109500,0],[110500,2],[111500,1],[112500,3],[114000,2],
+  [115500,1],[117000,3],[118500,2],[119500,1],[121000,3],[122500,2],
+  [124000,1],[125500,3],[127000,2],[128500,1],[130000,3],[131500,0],
+  [133000,2],[134500,1],[136000,3],[137500,2],[139000,1],[140500,3],
+  [142000,2],[143500,1],[145000,3],[146500,2],[148000,1],[150500,2],
+  [151500,1],[152500,3],[153500,2],[154500,1],[155500,3],[156500,0],
+  [157500,2],[158500,1],[159500,3],[161000,2],[162000,1],[163000,3],
+  [164000,2],[165000,1],[166500,3],[168000,2],[169000,1],[170000,3],
+  [171000,2],[172500,1],[173500,3],[174500,2],[178000,1],[181000,3],
+  [184000,2],[187000,1],[190000,3],[193500,2],[197000,1],[201000,3],
+  [205000,2],[209000,1],[212000,3],
+];
+
+/* ════════════════════════════════════════
+   ESTADO DEL JUEGO
+════════════════════════════════════════ */
+let score       = 0;
+let combo       = 0;
+let maxCombo    = 0;
+let totalHits   = 0;
+let totalMisses = 0;
+let activeTiles = [];
+let tileQueue   = [];
+let gameRunning = false;
+let gameRAF     = null;
+let milestoneIdx= 0;
+let msShown     = false; 
+
+const audio = document.getElementById('song');
+let gameStarted = false;
+
+/* ════════════════════════════════════════
+   LAYOUT
+════════════════════════════════════════ */
+let GA = {}; 
+
+function calcLayout() {
+  const el    = document.getElementById('game-area');
+  const rect  = el.getBoundingClientRect();
+  const laneW = rect.width / 4;
+
+  const hitLineY = rect.height * 0.82;
+  document.getElementById('hit-line').style.top = hitLineY + 'px';
+
+  const keyRow = document.getElementById('key-row');
+  keyRow.style.top    = (hitLineY + 2) + 'px';
+  keyRow.style.height = (rect.height - hitLineY - 2) + 'px';
+
+  GA = {
+    width:   rect.width,
+    height:  rect.height,
+    laneW,
+    hitY:    hitLineY,
+    tileH:   Math.max(48, rect.height * 0.075),
+    spawnY:  -80,
+  };
+}
+
+/* ════════════════════════════════════════
+   INICIAR JUEGO
+════════════════════════════════════════ */
+async function startGame() {
+  if (audio.readyState < 2) {
+    await new Promise(res => audio.addEventListener('canplay', res, { once: true }));
+  }
+
+  document.getElementById('ph0').classList.remove('active');
+  document.getElementById('ph1').classList.add('active');
+  document.getElementById('exit-btn').style.display = 'block';
+
+  calcLayout();
+
+  tileQueue = TILE_MAP.map(([t, l]) => ({
+    hitTime:   t + AUDIO_OFFSET,
+    spawnTime: t + AUDIO_OFFSET - FALL_DURATION,
+    lane:      l,
+    spawned:   false,
+  })).sort((a, b) => a.spawnTime - b.spawnTime);
+
+  score = combo = maxCombo = totalHits = totalMisses = 0;
+  activeTiles = []; milestoneIdx = 0; msShown = false;
+  updateHUD();
+
+  const gameArea = document.getElementById('game-area');
+  for (const n of ['3','2','1','']) {
+    const el = makeFeedbackEl(n || '¡Ya!', 'perfect', gameArea.offsetWidth / 2, GA.hitY - 30);
+    el.style.fontSize = n ? '2rem' : '1rem';
+    el.style.letterSpacing = '.1em';
+    document.getElementById('game-area').appendChild(el);
+    await sleep(n ? 800 : 400);
+  }
+
+  audio.currentTime = 0;
+  audio.play().catch(() => {});
+  gameRunning = true;
+  gameStarted = true;
+  gameLoop();
+}
+
+/* ════════════════════════════════════════
+   LOOP PRINCIPAL
+════════════════════════════════════════ */
+function gameLoop() {
+  if (!gameRunning) return;
+
+  const now = (audio.currentTime * 1000) || 0;
+
+  while (tileQueue.length > 0 && tileQueue[0].spawnTime <= now) {
+    spawnTile(tileQueue.shift());
+  }
+
+  const gameArea = document.getElementById('game-area');
+  const toRemove = [];
+
+  activeTiles.forEach(tile => {
+    // FIX: Cálculo visual exacto basado en el tiempo de spawn original
+    const elapsed  = now - tile.spawnTime;
+    const progress = elapsed / FALL_DURATION;
+    const y        = GA.spawnY + progress * (GA.hitY - GA.spawnY + GA.tileH);
+
+    tile.el.style.top = y + 'px';
+
+    const center = y + GA.tileH / 2;
+
+    // FIX: Auto-miss asegurándose de que la nota cruzó por completo la pantalla
+    if (center > GA.hitY + HIT_GOOD + 30) {
+      toRemove.push(tile);
+      flashLane(tile.lane, false);
+      showFeedback('MISS', tile.lane, GA.hitY, 'miss');
+      combo = 0;
+      totalMisses++;
+      updateHUD();
+      tile.el.remove();
+    }
+  });
+  
+  activeTiles = activeTiles.filter(t => !toRemove.includes(t));
+
+  const prog = Math.min(1, now / SONG_DURATION);
+  document.getElementById('progress-fill').style.width = (prog * 100) + '%';
+
+  checkMilestone(prog);
+
+  // FIX: Solo termina cuando la canción completa (incluido el silencio final) acaba
+  if (now > SONG_DURATION || audio.ended) {
+    endGame();
+    return;
+  }
+
+  gameRAF = requestAnimationFrame(gameLoop);
+}
+
+/* ════════════════════════════════════════
+   SPAWN TILE
+════════════════════════════════════════ */
+function spawnTile(tileData) {
+  const gameArea = document.getElementById('game-area');
+  const el       = document.createElement('div');
+  el.className   = 'tile';
+
+  const x     = tileData.lane * GA.laneW + GA.laneW * 0.06;
+  const width = GA.laneW * 0.88;
+
+  el.style.cssText = `
+    left:${x}px;
+    top:${GA.spawnY}px;
+    width:${width}px;
+    height:${GA.tileH}px;
+  `;
+
+  gameArea.appendChild(el);
+  
+  // FIX: Guardamos el tile respetando al 100% el tileData.spawnTime teórico (sincronía perfecta)
+  activeTiles.push({ ...tileData, el });
+}
+
+/* ════════════════════════════════════════
+   DETECCIÓN DE GOLPE
+════════════════════════════════════════ */
+function hitLane(lane) {
+  if (!gameRunning) return;
+
+  const kc = document.getElementById('kc-' + lane);
+  kc.classList.add('pressed');
+  setTimeout(() => kc.classList.remove('pressed'), 120);
+
+  const gameArea   = document.getElementById('game-area');
+  const areaRect   = gameArea.getBoundingClientRect();
+  const laneCenter = lane * GA.laneW + GA.laneW / 2;
+  
+  addRipple(areaRect.left + laneCenter, areaRect.top + GA.hitY);
+
+  const tilesInLane = activeTiles
+    .filter(t => t.lane === lane)
+    .map(t => {
+      const elapsed  = (audio.currentTime * 1000) - t.spawnTime;
+      const progress = elapsed / FALL_DURATION;
+      const y        = GA.spawnY + progress * (GA.hitY - GA.spawnY + GA.tileH);
+      return { tile: t, y, center: y + GA.tileH / 2 };
+    })
+    .sort((a, b) => Math.abs(a.center - GA.hitY) - Math.abs(b.center - GA.hitY));
+
+  if (tilesInLane.length === 0) return;
+
+  const { tile, center } = tilesInLane[0];
+  const dist = Math.abs(center - GA.hitY);
+
+  let type = null;
+  if (dist <= HIT_PERFECT) type = 'perfect';
+  else if (dist <= HIT_GOOD) type = 'good';
+
+  if (type) {
+    const pts = type === 'perfect' ? 100 : 50;
+    score += pts * (1 + Math.floor(combo / 10));
+    combo++;
+    if (combo > maxCombo) maxCombo = combo;
+    totalHits++;
+
+    tile.el.remove();
+    activeTiles = activeTiles.filter(t => t !== tile.tile);
+    flashLane(lane, true);
+    showFeedback(type === 'perfect' ? 'PERFECT' : 'GOOD', lane, GA.hitY, type);
+    updateHUD();
+  }
+}
+
+/* ════════════════════════════════════════
+   VISUAL HELPERS
+════════════════════════════════════════ */
+function flashLane(lane, success) {
+  const el = document.getElementById('lane-' + lane);
+  el.classList.add(success ? 'flash' : 'miss-flash');
+  setTimeout(() => el.classList.remove('flash', 'miss-flash'), success ? 130 : 250);
+}
+
+function showFeedback(text, lane, hitY, type) {
+  const gameArea = document.getElementById('game-area');
+  const x = lane * GA.laneW + GA.laneW / 2;
+  const el = makeFeedbackEl(text, type, x, hitY - 20);
+  gameArea.appendChild(el);
+  setTimeout(() => el.remove(), 750);
+}
+
+function makeFeedbackEl(text, type, x, y) {
+  const el = document.createElement('div');
+  el.className   = 'feedback ' + type;
+  el.textContent = text;
+  el.style.left  = x + 'px';
+  el.style.top   = y + 'px';
+  el.style.transform = 'translateX(-50%)';
+  return el;
+}
+
+function updateHUD() {
+  document.getElementById('hud-score').textContent = score.toLocaleString();
+  const comboEl = document.getElementById('hud-combo');
+  if (combo >= 5) {
+    comboEl.textContent = combo + ' · combo';
+    comboEl.classList.add('active');
+  } else {
+    comboEl.textContent = combo > 0 ? combo + ' combo' : '';
+    comboEl.classList.toggle('active', combo > 0);
+  }
+}
+
+/* ════════════════════════════════════════
+   MILESTONES
+════════════════════════════════════════ */
+async function checkMilestone(progress) {
+  if (milestoneIdx >= MILESTONES.length) return;
+  if (msShown) return;
+  if (progress < MILESTONES[milestoneIdx][0]) return;
+
+  const text = MILESTONES[milestoneIdx][1];
+  milestoneIdx++;
+  msShown = true;
+
+  const el   = document.getElementById('milestone');
+  const textEl = document.getElementById('milestone-text');
+  textEl.textContent = text;
+  el.classList.add('show');
+  await sleep(3200);
+  el.classList.remove('show');
+  await sleep(900);
+  msShown = false;
+}
+
+/* ════════════════════════════════════════
+   FIN DEL JUEGO
+════════════════════════════════════════ */
+async function endGame() {
+  gameRunning = false;
+  if (gameRAF) cancelAnimationFrame(gameRAF);
+  audio.pause();
+
+  localStorage.setItem('visited_melodia', 'true');
+
+  const total    = totalHits + totalMisses;
+  const accuracy = total > 0 ? Math.round((totalHits / total) * 100) : 0;
+
+  let phrase, sub;
+  if (accuracy >= 80) {
+    phrase = '"Si le monde est contre toi,\ntoi et moi contre le monde."';
+    sub    = 'Esta melodía siempre estuvo sonando de fondo en toda la historia.';
+  } else if (accuracy >= 50) {
+    phrase = '"River Flows in You"';
+    sub    = 'Algunas canciones no necesitan que las toques perfectamente\npara que digan exactamente lo que tienen que decir.';
+  } else {
+    phrase = 'La música no se trata de perfección.';
+    sub    = 'Se trata de que suene, de que llegue, de que quede.';
+  }
+
+  await sleep(800);
+  document.getElementById('ph1').classList.remove('active');
+  document.getElementById('ph2').classList.add('active');
+
+  document.getElementById('ph2-score-num').textContent  = score.toLocaleString();
+  document.getElementById('ph2-accuracy').textContent   = `${accuracy}% precisión · combo máx ${maxCombo}`;
+  document.getElementById('ph2-phrase').textContent     = phrase;
+  document.getElementById('ph2-sub').textContent        = sub;
+
+  await sleep(400);
+  document.getElementById('btn-hub').classList.add('show');
+}
+
+/* ════════════════════════════════════════
+   CONTROLES — TECLADO
+════════════════════════════════════════ */
+const KEY_MAP = { 'd': 0, 'f': 1, 'j': 2, 'k': 3 };
+window.addEventListener('keydown', e => {
+  if (!gameRunning) return;
+  const lane = KEY_MAP[e.key.toLowerCase()];
+  if (lane !== undefined) hitLane(lane);
+});
+
+/* ════════════════════════════════════════
+   CONTROLES — TOUCH
+════════════════════════════════════════ */
+document.getElementById('game-area').addEventListener('touchstart', e => {
+  if (!gameRunning) return;
+  e.preventDefault();
+  Array.from(e.changedTouches).forEach(touch => {
+    const el      = document.getElementById('game-area');
+    const rect    = el.getBoundingClientRect();
+    const relX    = touch.clientX - rect.left;
+    const lane    = Math.min(3, Math.floor(relX / GA.laneW));
+    if (lane >= 0) hitLane(lane);
+  });
+}, { passive: false });
+
+/* ════════════════════════════════════════
+   INTRO — ANIMACIÓN DE ENTRADA
+════════════════════════════════════════ */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function animIntro() {
+  await sleep(500);
+  document.getElementById('ph0-tag').classList.add('lit');
+  await sleep(800);
+  document.getElementById('ph0-title').classList.add('lit');
+  await sleep(500);
+  document.getElementById('ph0-author').classList.add('lit');
+  document.querySelector('.ph0-rule').classList.add('lit');
+  await sleep(400);
+  document.getElementById('ph0-sub').classList.add('lit');
+}
+animIntro();
+
+/* ════════════════════════════════════════
+   PAUSA si pierde el foco
+════════════════════════════════════════ */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && gameRunning) {
+    audio.pause();
+    gameRunning = false;
+    cancelAnimationFrame(gameRAF);
+  } else if (!document.hidden && gameStarted && !audio.ended) {
+    audio.play().catch(() => {});
+    gameRunning = true;
+    gameLoop();
+  }
+});
+
+/* ════════════════════════════════════════
+   SALIDA
+════════════════════════════════════════ */
+function volverAlHub() {
+  localStorage.setItem('visited_melodia', 'true');
+  document.body.classList.add('fade-out');
+  setTimeout(() => { window.location.href = 'Hub.html'; }, 1200);
+}
+</script>
+</body>
+</html>
