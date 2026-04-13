@@ -229,10 +229,8 @@ body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
 }
 #milestone.show{opacity:1;}
 #milestone.hide{opacity:0;}
-
-/* FIX: Agregar white-space: pre-wrap para que se respeten los saltos de línea (\n) */
 #milestone-text{font-family:'Playfair Display',serif;font-style:italic;
-  font-size:clamp(.9rem,2vw,1.25rem); white-space: pre-wrap; 
+  font-size:clamp(.9rem,2vw,1.25rem);
   color:rgba(200,215,255,.8);max-width:340px;line-height:1.65;
   text-shadow:0 1px 12px rgba(0,0,0,.95);}
 
@@ -253,17 +251,16 @@ body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
 .ph2-rule{width:40px;height:1px;margin:22px auto;
   background:linear-gradient(90deg,transparent,rgba(150,180,255,.4),transparent);}
 
-/* FIX: white-space: pre-wrap para saltos de línea */
 #ph2-phrase{font-family:'Playfair Display',serif;font-style:italic;
-  font-size:clamp(1.1rem,3vw,1.85rem); white-space: pre-wrap; 
+  font-size:clamp(1.1rem,3vw,1.85rem);
   color:rgba(200,220,255,.92);line-height:1.55;
   text-shadow:0 0 20px rgba(100,160,255,.35);}
 #ph2-sub{font-family:'Playfair Display',serif;font-style:italic;
-  font-size:clamp(.85rem,1.7vw,1.08rem); white-space: pre-wrap; 
+  font-size:clamp(.85rem,1.7vw,1.08rem);
   color:rgba(200,215,255,.45);margin-top:12px;max-width:420px;}
 
 /* Exit */
-#exit-btn{position:fixed;top:24px;left:24px;z-index:30;
+#exit-btn{position:fixed;bottom:7vh;right:24px;z-index:30;
   background:none;border:none;font-family:'Cinzel',serif;font-size:.62rem;
   letter-spacing:.22em;text-transform:uppercase;
   color:rgba(150,180,255,.28);cursor:none;display:none;transition:.3s;}
@@ -272,6 +269,7 @@ body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
 </head>
 <body>
 
+<!-- Audio — pon yiruma.mp3 en la misma carpeta -->
 <audio id="song" src="yiruma.mp3" preload="auto"></audio>
 
 <div id="cur"></div>
@@ -279,23 +277,27 @@ body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
 <div id="lbb"></div>
 <canvas id="bg-canvas"></canvas>
 
+<!-- ═══════════ FASE 0: INTRO ═══════════ -->
 <div class="phase active" id="ph0">
   <div id="ph0-tag">V · Planeta Melodía</div>
-  <div id="ph0-title">River Flows in You</div>
-  <div id="ph0-author">Yiruma, 2001</div>
+  <div id="ph0-title">Love Me</div>
+  <div id="ph0-author">Yiruma, 2002</div>
   <div class="ph0-rule"></div>
   <div id="ph0-sub">Una canción que no necesita letra para decirlo todo.</div>
   <div id="keys-hint">D · F · J · K &nbsp;—&nbsp; o toca las columnas</div>
   <button class="btn show" id="btn-start" onclick="startGame()">Comenzar</button>
 </div>
 
+<!-- ═══════════ FASE 1: JUEGO ════════════ -->
 <div class="phase" id="ph1">
 
+  <!-- HUD -->
   <div id="hud">
     <div id="hud-score">0</div>
     <div id="hud-combo"></div>
   </div>
 
+  <!-- Área del juego -->
   <div id="game-area">
     <div id="lanes">
       <div class="lane" id="lane-0"></div>
@@ -313,13 +315,15 @@ body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
     <div id="milestone"><div id="milestone-text"></div></div>
   </div>
 
+  <!-- Progress -->
   <div id="progress-bar-wrap">
     <div id="progress-track"><div id="progress-fill"></div></div>
-    <div id="progress-label">River Flows in You</div>
+    <div id="progress-label">Love Me · Yiruma</div>
   </div>
 
 </div>
 
+<!-- ═══════════ FASE 2: FIN ═══════════════ -->
 <div class="phase" id="ph2">
   <div id="ph2-score-wrap">
     <div id="ph2-score-label">Puntuación final</div>
@@ -361,11 +365,13 @@ function resizeBg() {
 window.addEventListener('resize', resizeBg);
 resizeBg();
 
+// Ondas de agua (círculos expandiéndose)
 let ripples = [];
 function addRipple(x, y) {
   ripples.push({ x, y, r: 0, max: 80 + Math.random() * 60, a: 0.35 });
 }
 
+// Notas musicales flotantes de fondo
 const NOTES = Array.from({ length: 18 }, () => ({
   x: Math.random(), y: Math.random(),
   vy: -(0.06 + Math.random() * 0.12) / 1000,
@@ -378,6 +384,7 @@ function renderBg() {
   bgCtx.fillStyle = 'rgba(5,4,8,.22)';
   bgCtx.fillRect(0, 0, BW, BH);
 
+  // Notas flotantes
   NOTES.forEach(n => {
     n.y += n.vy;
     if (n.y < -0.05) n.y = 1.05;
@@ -388,6 +395,7 @@ function renderBg() {
     bgCtx.fillText(n.sym, n.x * BW, n.y * BH);
   });
 
+  // Ondas de agua
   ripples = ripples.filter(r => r.a > 0);
   ripples.forEach(r => {
     r.r += 1.8;
@@ -398,7 +406,7 @@ function renderBg() {
     bgCtx.beginPath();
     bgCtx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
     bgCtx.stroke();
-    
+    // segundo anillo más suave
     bgCtx.globalAlpha = Math.max(0, r.a * 0.4);
     bgCtx.beginPath();
     bgCtx.arc(r.x, r.y, r.r * 0.6, 0, Math.PI * 2);
@@ -413,50 +421,78 @@ renderBg();
 /* ════════════════════════════════════════
    CONFIGURACIÓN DEL JUEGO
 ════════════════════════════════════════ */
+// Ajusta AUDIO_OFFSET si tu MP3 tiene un intro diferente (en ms)
 const AUDIO_OFFSET  = 0;
+// Tiempo que tarda un tile en caer desde el spawn hasta la hit zone (ms)
 const FALL_DURATION = 1800;
+// Ventana de acierto: Perfect ±35px, Good ±65px del centro de hit zone
 const HIT_PERFECT   = 35;
 const HIT_GOOD      = 65;
-const SONG_DURATION = 214000;
+// Duración total de Love Me (~208s) — ajusta si tu versión es diferente
+const SONG_DURATION = 208000;
 
+// Milestones: [progreso 0-1, texto]
 const MILESTONES = [
-  [0.12, 'River Flows in You\nYiruma · 2001'],
-  [0.35, 'Yiruma empezó a estudiar piano a los 7 años.\nTú ya sabes por qué lo escuchas.'],
-  [0.60, 'Esta canción ha sonado de fondo\nen mil momentos tuyos.'],
-  [0.82, 'El Royal College of Music.\nEl Berklee College. Seúl.\nY tu playlist.'],
+  [0.12, 'Love Me · Yiruma, 2002'],
+  [0.35, 'Yiruma estudió en el Royal College of Music.\nTú habrías pasado la audición.'],
+  [0.62, 'Algunas canciones no se describen.\nSolo se reconocen.'],
+  [0.84, 'Seúl · Londres · El mundo entero.\nY tu playlist.'],
 ];
 
+/* ════════════════════════════════════════
+   MAPA DE TILES — Love Me (Yiruma)
+   Formato: [hit_time_ms, lane 0-3]
+   Love Me: tempo ~66 BPM, 3/4 compás
+   Duración estándar ~208s
+   Ajusta AUDIO_OFFSET si tu intro difiere
+════════════════════════════════════════ */
 const TILE_MAP = [
-  [3200,1],[5800,2],[8200,1],[10500,3],[12200,0],[13000,2],
-  [13800,2],[14700,1],[15600,3],[16500,2],[17400,1],[18300,3],
-  [19200,0],[20100,2],[21000,1],[21900,3],[22800,2],[23700,1],
-  [24600,3],[25500,0],[26400,2],[27300,1],[28500,3],[29400,2],
-  [30300,1],[31200,3],[32100,2],[33000,1],[33900,3],[34800,0],
-  [35700,2],[36600,1],[37500,3],[38400,2],[39300,1],[40200,3],
-  [41100,0],[42000,2],[43200,1],[44000,3],[44800,2],[45600,1],
-  [46400,3],[47200,0],[48000,2],[48800,1],[49600,3],[50400,2],
-  [51200,1],[52000,3],[53000,0],[54000,2],[55000,1],[56000,3],
-  [57000,2],[58500,1],[59500,3],[60500,2],[61200,3],[61900,1],
-  [62800,2],[63500,3],[64200,1],[65000,2],[65700,0],[66500,3],
-  [67200,2],[68000,1],[68800,3],[69600,2],[70400,1],[71200,3],
-  [72000,0],[72800,2],[73600,1],[74400,3],[75200,2],[76000,2],
-  [76700,3],[77500,1],[78300,2],[79100,3],[79900,1],[80700,2],
-  [81500,3],[82300,0],[83200,2],[84000,1],[84800,3],[85600,2],
-  [86400,1],[87200,3],[88000,0],[88800,2],[89600,1],[90400,3],
-  [91200,2],[92000,1],[92800,3],[93600,2],[94400,1],[95500,3],
-  [96500,2],[97500,1],[98500,3],[99500,2],[100500,1],[101500,3],
-  [102500,0],[103500,2],[104500,1],[105500,3],[106500,2],[107500,1],
-  [108500,3],[109500,0],[110500,2],[111500,1],[112500,3],[114000,2],
-  [115500,1],[117000,3],[118500,2],[119500,1],[121000,3],[122500,2],
-  [124000,1],[125500,3],[127000,2],[128500,1],[130000,3],[131500,0],
-  [133000,2],[134500,1],[136000,3],[137500,2],[139000,1],[140500,3],
-  [142000,2],[143500,1],[145000,3],[146500,2],[148000,1],[150500,2],
-  [151500,1],[152500,3],[153500,2],[154500,1],[155500,3],[156500,0],
-  [157500,2],[158500,1],[159500,3],[161000,2],[162000,1],[163000,3],
-  [164000,2],[165000,1],[166500,3],[168000,2],[169000,1],[170000,3],
-  [171000,2],[172500,1],[173500,3],[174500,2],[178000,1],[181000,3],
-  [184000,2],[187000,1],[190000,3],[193500,2],[197000,1],[201000,3],
-  [205000,2],[209000,1],[212000,3],
+  // INTRO — entrada suave, notas sueltas (0-12s)
+  [2800,1],[5200,2],[7600,1],[9800,3],[11500,0],
+
+  // FRASE A — melodía principal (12-32s)
+  [12800,2],[14200,1],[15600,3],[17000,2],[18400,1],
+  [19800,3],[21200,0],[22600,2],[24000,1],[25400,3],
+  [26800,2],[28200,1],[29600,3],[31000,2],
+
+  // FRASE A — repetición (32-52s)
+  [32500,1],[33900,3],[35300,2],[36700,1],[38100,3],
+  [39500,0],[40900,2],[42300,1],[43700,3],[45100,2],
+  [46500,1],[47900,3],[49300,0],[50700,2],
+
+  // PUENTE — centro expresivo (52-72s)
+  [52500,3],[53700,2],[55000,1],[56200,3],[57500,2],
+  [58700,1],[60000,3],[61200,0],[62500,2],[63700,1],
+  [65000,3],[66200,2],[67500,1],[68700,3],[70000,2],[71200,1],
+
+  // CLÍMAX — sección más intensa (72-95s)
+  [72800,3],[73800,2],[74800,1],[75800,3],[76800,2],
+  [77800,1],[78800,3],[80000,0],[81200,2],[82400,1],
+  [83600,3],[84800,2],[86000,1],[87200,3],[88400,0],
+  [89600,2],[90800,1],[92000,3],[93200,2],[94400,1],
+
+  // RETORNO FRASE A (95-118s)
+  [96000,3],[97500,2],[99000,1],[100500,3],[102000,2],
+  [103500,1],[105000,3],[106500,0],[108000,2],[109500,1],
+  [111000,3],[112500,2],[114000,1],[115500,3],[117000,2],
+
+  // DESARROLLO MEDIO (118-145s)
+  [119000,1],[120500,3],[122000,2],[123500,1],[125000,3],
+  [126500,2],[128000,1],[129500,3],[131000,0],[132500,2],
+  [134000,1],[135500,3],[137000,2],[138500,1],[140000,3],
+  [141500,2],[143000,1],[144500,3],
+
+  // REEXPOSICIÓN — vuelve el tema con más peso (145-170s)
+  [146000,2],[147200,1],[148400,3],[149600,2],[150800,1],
+  [152000,3],[153200,0],[154400,2],[155600,1],[156800,3],
+  [158000,2],[159200,1],[160400,3],[161600,2],[162800,1],
+  [164000,3],[165200,0],[166400,2],[167600,1],[168800,3],
+  [170000,2],
+
+  // CODA — desvanecimiento final (172-207s)
+  [172500,1],[175500,3],[178500,2],[181500,1],[184500,3],
+  [187500,2],[190500,1],[194000,3],[197500,2],[201000,1],
+  [204500,3],[207000,2],
 ];
 
 /* ════════════════════════════════════════
@@ -467,29 +503,31 @@ let combo       = 0;
 let maxCombo    = 0;
 let totalHits   = 0;
 let totalMisses = 0;
-let activeTiles = [];
-let tileQueue   = [];
+let activeTiles = [];   // tiles en pantalla
+let tileQueue   = [];   // tiles pendientes de spawner
 let gameRunning = false;
 let gameRAF     = null;
 let milestoneIdx= 0;
-let msShown     = false; 
+let msShown     = false; // milestone visible
 
 const audio = document.getElementById('song');
 let gameStarted = false;
 
 /* ════════════════════════════════════════
-   LAYOUT
+   LAYOUT — dimensiones del área de juego
 ════════════════════════════════════════ */
-let GA = {}; 
+let GA = {}; // game area metrics
 
 function calcLayout() {
   const el    = document.getElementById('game-area');
   const rect  = el.getBoundingClientRect();
   const laneW = rect.width / 4;
 
+  // Hit line está a 82% del alto del game-area
   const hitLineY = rect.height * 0.82;
   document.getElementById('hit-line').style.top = hitLineY + 'px';
 
+  // Key row justo debajo de la hit line
   const keyRow = document.getElementById('key-row');
   keyRow.style.top    = (hitLineY + 2) + 'px';
   keyRow.style.height = (rect.height - hitLineY - 2) + 'px';
@@ -498,9 +536,9 @@ function calcLayout() {
     width:   rect.width,
     height:  rect.height,
     laneW,
-    hitY:    hitLineY,
-    tileH:   Math.max(48, rect.height * 0.075),
-    spawnY:  -80,
+    hitY:    hitLineY,   // y de la hit line dentro del game-area
+    tileH:   Math.max(48, rect.height * 0.075), // altura del tile
+    spawnY:  -80,        // spawn fuera del borde superior
   };
 }
 
@@ -508,16 +546,20 @@ function calcLayout() {
    INICIAR JUEGO
 ════════════════════════════════════════ */
 async function startGame() {
+  // Comprobar que el audio está disponible
   if (audio.readyState < 2) {
+    // Esperar a que cargue
     await new Promise(res => audio.addEventListener('canplay', res, { once: true }));
   }
 
+  // Transición a fase 1
   document.getElementById('ph0').classList.remove('active');
   document.getElementById('ph1').classList.add('active');
   document.getElementById('exit-btn').style.display = 'block';
 
   calcLayout();
 
+  // Preparar cola de tiles (con offset de spawn)
   tileQueue = TILE_MAP.map(([t, l]) => ({
     hitTime:   t + AUDIO_OFFSET,
     spawnTime: t + AUDIO_OFFSET - FALL_DURATION,
@@ -525,10 +567,12 @@ async function startGame() {
     spawned:   false,
   })).sort((a, b) => a.spawnTime - b.spawnTime);
 
+  // Reset estado
   score = combo = maxCombo = totalHits = totalMisses = 0;
   activeTiles = []; milestoneIdx = 0; msShown = false;
   updateHUD();
 
+  // Pequeño conteo regresivo
   const gameArea = document.getElementById('game-area');
   for (const n of ['3','2','1','']) {
     const el = makeFeedbackEl(n || '¡Ya!', 'perfect', gameArea.offsetWidth / 2, GA.hitY - 30);
@@ -538,8 +582,9 @@ async function startGame() {
     await sleep(n ? 800 : 400);
   }
 
+  // Iniciar audio y loop
   audio.currentTime = 0;
-  audio.play().catch(() => {});
+  audio.play().catch(() => {}); // autoplay puede fallar en algunos browsers
   gameRunning = true;
   gameStarted = true;
   gameLoop();
@@ -553,25 +598,24 @@ function gameLoop() {
 
   const now = (audio.currentTime * 1000) || 0;
 
+  // Spawner: crear tiles según el tiempo del audio
   while (tileQueue.length > 0 && tileQueue[0].spawnTime <= now) {
     spawnTile(tileQueue.shift());
   }
 
+  // Mover tiles y detectar misses
   const gameArea = document.getElementById('game-area');
   const toRemove = [];
 
   activeTiles.forEach(tile => {
-    // FIX: Cálculo visual exacto basado en el tiempo de spawn original
     const elapsed  = now - tile.spawnTime;
     const progress = elapsed / FALL_DURATION;
     const y        = GA.spawnY + progress * (GA.hitY - GA.spawnY + GA.tileH);
 
     tile.el.style.top = y + 'px';
 
-    const center = y + GA.tileH / 2;
-
-    // FIX: Auto-miss asegurándose de que la nota cruzó por completo la pantalla
-    if (center > GA.hitY + HIT_GOOD + 30) {
+    // Auto-miss: pasó la hit zone + margen
+    if (y > GA.hitY + HIT_GOOD + 10) {
       toRemove.push(tile);
       flashLane(tile.lane, false);
       showFeedback('MISS', tile.lane, GA.hitY, 'miss');
@@ -581,16 +625,17 @@ function gameLoop() {
       tile.el.remove();
     }
   });
-  
   activeTiles = activeTiles.filter(t => !toRemove.includes(t));
 
+  // Progreso de la canción
   const prog = Math.min(1, now / SONG_DURATION);
   document.getElementById('progress-fill').style.width = (prog * 100) + '%';
 
+  // Milestones
   checkMilestone(prog);
 
-  // FIX: Solo termina cuando la canción completa (incluido el silencio final) acaba
-  if (now > SONG_DURATION || audio.ended) {
+  // Fin de canción
+  if (now > SONG_DURATION || (tileQueue.length === 0 && activeTiles.length === 0 && now > 10000)) {
     endGame();
     return;
   }
@@ -617,9 +662,13 @@ function spawnTile(tileData) {
   `;
 
   gameArea.appendChild(el);
-  
-  // FIX: Guardamos el tile respetando al 100% el tileData.spawnTime teórico (sincronía perfecta)
-  activeTiles.push({ ...tileData, el });
+  activeTiles.push({ ...tileData, el, spawnTime: (audio.currentTime * 1000) - (FALL_DURATION - (tileData.hitTime - tileData.spawnTime)) });
+
+  // Recalcular spawnTime real basado en audio actual
+  const tileObj = activeTiles[activeTiles.length - 1];
+  tileObj.spawnTime = audio.currentTime * 1000 - (FALL_DURATION - FALL_DURATION);
+  // Corrección: el tile debería estar en GA.spawnY en este momento
+  tileObj.spawnTime = audio.currentTime * 1000;
 }
 
 /* ════════════════════════════════════════
@@ -628,16 +677,18 @@ function spawnTile(tileData) {
 function hitLane(lane) {
   if (!gameRunning) return;
 
+  // Flash visual en la tecla
   const kc = document.getElementById('kc-' + lane);
   kc.classList.add('pressed');
   setTimeout(() => kc.classList.remove('pressed'), 120);
 
+  // Añadir onda de agua centrada en la lane
   const gameArea   = document.getElementById('game-area');
   const areaRect   = gameArea.getBoundingClientRect();
-  const laneCenter = lane * GA.laneW + GA.laneW / 2;
-  
-  addRipple(areaRect.left + laneCenter, areaRect.top + GA.hitY);
+  const laneCenter = areaRect.left + lane * GA.laneW + GA.laneW / 2;
+  addRipple(laneCenter, areaRect.top + GA.hitY);
 
+  // Buscar el tile más cercano a la hit zone en este lane
   const tilesInLane = activeTiles
     .filter(t => t.lane === lane)
     .map(t => {
@@ -658,6 +709,7 @@ function hitLane(lane) {
   else if (dist <= HIT_GOOD) type = 'good';
 
   if (type) {
+    // Acierto
     const pts = type === 'perfect' ? 100 : 50;
     score += pts * (1 + Math.floor(combo / 10));
     combo++;
@@ -665,7 +717,7 @@ function hitLane(lane) {
     totalHits++;
 
     tile.el.remove();
-    activeTiles = activeTiles.filter(t => t !== tile.tile);
+    activeTiles = activeTiles.filter(t => t !== tile);
     flashLane(lane, true);
     showFeedback(type === 'perfect' ? 'PERFECT' : 'GOOD', lane, GA.hitY, type);
     updateHUD();
@@ -741,11 +793,13 @@ async function endGame() {
   if (gameRAF) cancelAnimationFrame(gameRAF);
   audio.pause();
 
+  // Guardar progreso
   localStorage.setItem('visited_melodia', 'true');
 
   const total    = totalHits + totalMisses;
   const accuracy = total > 0 ? Math.round((totalHits / total) * 100) : 0;
 
+  // Determinar frase y subtexto según rendimiento
   let phrase, sub;
   if (accuracy >= 80) {
     phrase = '"Si le monde est contre toi,\ntoi et moi contre le monde."';
