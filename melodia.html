@@ -16,11 +16,10 @@ body{opacity:0;animation:fadeIn 1.8s forwards;}
 @keyframes fadeIn{to{opacity:1;}}
 body.fade-out{opacity:0!important;transition:opacity 1.2s ease;}
 
-/* Cursor */
+/* Cursor cruceta */
 #cur{position:fixed;z-index:9999;pointer-events:none;
-  width:18px;height:18px;transform:translate(-50%,-50%);}
-#cur::before,#cur::after{content:'';position:absolute;
-  background:rgba(180,200,255,.65);}
+  width:18px;height:18px;transform:translate(-50%,-50%);left:-300px;top:-300px;}
+#cur::before,#cur::after{content:'';position:absolute;background:rgba(180,200,255,.65);}
 #cur::before{width:100%;height:1px;top:50%;left:0;transform:translateY(-50%);}
 #cur::after{width:1px;height:100%;left:50%;top:0;transform:translateX(-50%);}
 
@@ -30,15 +29,14 @@ body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
   opacity:.45;mix-blend-mode:overlay;}
 
 /* Letterbox */
-#lbt,#lbb{position:fixed;left:0;right:0;background:#000;
-  z-index:350;pointer-events:none;height:6vh;}
+#lbt,#lbb{position:fixed;left:0;right:0;background:#000;z-index:350;pointer-events:none;height:6vh;}
 #lbt{top:0;}#lbb{bottom:0;}
 
-/* Canvas fondo */
-#bg-canvas{position:fixed;top:0;left:0;z-index:0;pointer-events:none;}
+/* Contenedor de Phaser (z-index bajo, detrás de las fases DOM) */
+#phaser-root{position:fixed;inset:0;z-index:0;pointer-events:auto;}
 
 /* ═══════════════════════════════════════
-   FASES
+   FASES DOM — Intro y Fin
 ═══════════════════════════════════════ */
 .phase{position:fixed;inset:0;z-index:5;
   opacity:0;pointer-events:none;transition:opacity 1.2s ease;
@@ -49,23 +47,23 @@ body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
 /* ═══════════════════════════════════════
    FASE 0 — INTRO
 ═══════════════════════════════════════ */
-#ph0{text-align:center;padding:0 32px;gap:0;}
+#ph0{text-align:center;padding:0 32px;}
 
 #ph0-tag{font-size:clamp(.6rem,1.1vw,.72rem);letter-spacing:.38em;
-  text-transform:uppercase;color:rgba(150,180,255,.0);
+  text-transform:uppercase;color:rgba(150,180,255,0);
   margin-bottom:16px;transition:color 1.2s ease;}
 #ph0-tag.lit{color:rgba(150,180,255,.72);}
 
 #ph0-title{font-family:'Cinzel Decorative',serif;
   font-size:clamp(1.8rem,5.5vw,4rem);
-  color:rgba(245,240,232,.0);line-height:1.18;margin-bottom:16px;
+  color:rgba(245,240,232,0);line-height:1.18;margin-bottom:16px;
   transition:color 1.5s ease,text-shadow 1.5s ease;}
 #ph0-title.lit{color:rgba(245,240,232,.95);
   text-shadow:0 0 40px rgba(120,160,255,.35),0 2px 20px rgba(0,0,0,.98);}
 
 #ph0-author{font-family:'Playfair Display',serif;font-style:italic;
   font-size:clamp(.9rem,2vw,1.3rem);
-  color:rgba(150,180,255,.0);margin-bottom:10px;
+  color:rgba(150,180,255,0);margin-bottom:10px;
   transition:color 1.2s ease .4s;}
 #ph0-author.lit{color:rgba(150,180,255,.65);}
 
@@ -76,13 +74,12 @@ body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
 
 #ph0-sub{font-family:'Playfair Display',serif;font-style:italic;
   font-size:clamp(.88rem,1.8vw,1.15rem);
-  color:rgba(200,210,255,.0);max-width:460px;line-height:1.72;margin-bottom:48px;
+  color:rgba(200,210,255,0);max-width:460px;line-height:1.72;margin-bottom:36px;
   transition:color 1.3s ease .6s;}
 #ph0-sub.lit{color:rgba(200,210,255,.58);}
 
-/* Keys hint */
 #keys-hint{font-size:clamp(.58rem,1vw,.7rem);letter-spacing:.18em;
-  color:rgba(255,255,255,.22);margin-bottom:18px;text-transform:uppercase;}
+  color:rgba(255,255,255,.22);margin-bottom:20px;text-transform:uppercase;}
 
 /* ═══════════════════════════════════════
    BOTÓN BASE
@@ -110,131 +107,6 @@ body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
 .btn:hover::after{opacity:1;width:76%;}
 
 /* ═══════════════════════════════════════
-   FASE 1 — JUEGO PIANO TILES
-═══════════════════════════════════════ */
-#ph1{padding:0;justify-content:flex-start;}
-
-/* HUD superior */
-#hud{
-  position:absolute;top:7vh;left:50%;transform:translateX(-50%);
-  z-index:20;display:flex;align-items:center;gap:clamp(16px,3vw,36px);
-  pointer-events:none;
-}
-#hud-score{font-family:'Cinzel Decorative',serif;
-  font-size:clamp(1.2rem,3vw,2rem);color:rgba(200,220,255,.88);
-  text-shadow:0 0 18px rgba(100,160,255,.4);min-width:4ch;text-align:center;}
-#hud-combo{font-size:clamp(.6rem,1.2vw,.75rem);letter-spacing:.22em;
-  color:rgba(150,180,255,.55);text-align:center;min-width:80px;
-  transition:color .3s;}
-#hud-combo.active{color:rgba(180,210,255,.9);}
-
-/* Barra de progreso */
-#progress-bar-wrap{
-  position:absolute;bottom:7.2vh;left:50%;transform:translateX(-50%);
-  z-index:20;width:min(400px,70vw);pointer-events:none;
-  display:flex;flex-direction:column;align-items:center;gap:5px;
-}
-#progress-track{width:100%;height:2px;background:rgba(255,255,255,.08);border-radius:1px;}
-#progress-fill{height:100%;width:0%;background:rgba(150,180,255,.5);
-  border-radius:1px;transition:width .5s linear;
-  box-shadow:0 0 6px rgba(100,160,255,.5);}
-#progress-label{font-size:.58rem;letter-spacing:.2em;
-  color:rgba(255,255,255,.2);text-transform:uppercase;}
-
-/* Contenedor del juego */
-#game-area{
-  position:absolute;
-  top:14vh;bottom:14vh;
-  left:50%;transform:translateX(-50%);
-  width:min(480px,96vw);
-  overflow:hidden;
-}
-
-/* 4 lanes */
-#lanes{position:absolute;inset:0;display:flex;}
-.lane{
-  flex:1;position:relative;
-  border-right:1px solid rgba(255,255,255,.04);
-  transition:background .12s;
-}
-.lane:last-child{border-right:none;}
-.lane.flash{background:rgba(150,180,255,.12)!important;}
-.lane.miss-flash{background:rgba(200,60,60,.10)!important;}
-
-/* Colores de lane muy sutiles */
-.lane:nth-child(1){background:rgba(80,100,180,.04);}
-.lane:nth-child(2){background:rgba(100,130,220,.03);}
-.lane:nth-child(3){background:rgba(100,130,220,.03);}
-.lane:nth-child(4){background:rgba(80,100,180,.04);}
-
-/* Hit zone line */
-#hit-line{
-  position:absolute;
-  left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,rgba(150,180,255,.45),rgba(150,180,255,.45),transparent);
-  box-shadow:0 0 10px rgba(100,160,255,.35);
-  z-index:15;pointer-events:none;
-}
-
-/* Teclas visuales en la hit zone */
-#key-row{
-  position:absolute;left:0;right:0;height:52px;
-  display:flex;z-index:14;pointer-events:none;
-}
-.key-cap{
-  flex:1;display:flex;align-items:center;justify-content:center;
-  font-size:.58rem;letter-spacing:.15em;color:rgba(255,255,255,.18);
-  border-right:1px solid rgba(255,255,255,.05);
-  background:rgba(0,0,0,.25);
-  transition:background .1s;
-}
-.key-cap:last-child{border-right:none;}
-.key-cap.pressed{background:rgba(150,180,255,.15);}
-
-/* Tiles */
-.tile{
-  position:absolute;
-  border-radius:4px;
-  background:linear-gradient(180deg,rgba(130,165,255,.92) 0%,rgba(80,120,220,.88) 100%);
-  box-shadow:0 0 12px rgba(100,150,255,.5),inset 0 1px 0 rgba(255,255,255,.2);
-  transition:none;
-  z-index:10;
-}
-.tile.perfect{
-  background:linear-gradient(180deg,rgba(212,200,100,.95) 0%,rgba(180,150,40,.9) 100%);
-  box-shadow:0 0 18px rgba(212,180,60,.7);
-}
-
-/* Feedback text float */
-.feedback{
-  position:absolute;z-index:30;
-  font-family:'Cinzel',serif;font-size:clamp(.75rem,1.5vw,.95rem);
-  letter-spacing:.15em;pointer-events:none;
-  animation:floatUp .7s ease forwards;
-}
-.feedback.perfect{color:rgba(255,220,80,.95);
-  text-shadow:0 0 12px rgba(255,200,50,.6);}
-.feedback.good{color:rgba(180,200,255,.85);}
-.feedback.miss{color:rgba(220,80,80,.75);}
-@keyframes floatUp{
-  0%{opacity:1;transform:translateY(0);}
-  100%{opacity:0;transform:translateY(-55px);}
-}
-
-/* Milestone overlay */
-#milestone{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  z-index:25;text-align:center;pointer-events:none;
-  opacity:0;transition:opacity .8s ease;
-}
-#milestone.show{opacity:1;}
-#milestone.hide{opacity:0;}
-#milestone-text{font-family:'Playfair Display',serif;font-style:italic;
-  font-size:clamp(.9rem,2vw,1.25rem);
-  color:rgba(200,215,255,.8);max-width:340px;line-height:1.65;
-  text-shadow:0 1px 12px rgba(0,0,0,.95);}
-
-/* ═══════════════════════════════════════
    FASE 2 — COMPLETION
 ═══════════════════════════════════════ */
 #ph2{text-align:center;padding:0 32px;}
@@ -247,35 +119,81 @@ body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
   text-shadow:0 0 28px rgba(100,160,255,.45);}
 #ph2-accuracy{font-size:clamp(.62rem,1.2vw,.75rem);letter-spacing:.18em;
   color:rgba(200,215,255,.45);margin-top:4px;}
-
 .ph2-rule{width:40px;height:1px;margin:22px auto;
   background:linear-gradient(90deg,transparent,rgba(150,180,255,.4),transparent);}
-
 #ph2-phrase{font-family:'Playfair Display',serif;font-style:italic;
   font-size:clamp(1.1rem,3vw,1.85rem);
-  color:rgba(200,220,255,.92);line-height:1.55;
+  color:rgba(200,220,255,.92);line-height:1.55;white-space:pre-line;
   text-shadow:0 0 20px rgba(100,160,255,.35);}
 #ph2-sub{font-family:'Playfair Display',serif;font-style:italic;
   font-size:clamp(.85rem,1.7vw,1.08rem);
-  color:rgba(200,215,255,.45);margin-top:12px;max-width:420px;}
+  color:rgba(200,215,255,.45);margin-top:12px;max-width:420px;white-space:pre-line;}
 
-/* Exit */
+/* ═══════════════════════════════════════
+   EXIT
+═══════════════════════════════════════ */
 #exit-btn{position:fixed;bottom:7vh;right:24px;z-index:30;
   background:none;border:none;font-family:'Cinzel',serif;font-size:.62rem;
   letter-spacing:.22em;text-transform:uppercase;
-  color:rgba(150,180,255,.28);cursor:none;display:none;transition:.3s;}
+  color:rgba(150,180,255,.28);cursor:none;display:none;transition:.3s;
+  min-height:44px;padding:8px 12px;}
 #exit-btn:hover{color:rgba(150,180,255,.72);}
+
+/* ═══════════════════════════════════════
+   PAUSA — overlay y botón flotante
+═══════════════════════════════════════ */
+/* El overlay de pausa cubre el canvas con un cristal esmerilado:
+   el juego congelado se ve borroso al fondo */
+#ph-pause{
+  text-align:center;padding:0 32px;
+  background:rgba(5,4,8,.78);
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);}
+
+#pause-tag{font-size:clamp(.52rem,.9vw,.62rem);letter-spacing:.48em;
+  text-transform:uppercase;color:rgba(150,180,255,.35);margin-bottom:28px;}
+
+#pause-score-label{font-size:clamp(.5rem,.85vw,.6rem);letter-spacing:.22em;
+  text-transform:uppercase;color:rgba(150,180,255,.25);margin-bottom:8px;}
+
+#pause-score{font-family:'Cinzel Decorative',serif;
+  font-size:clamp(1.8rem,5vw,3rem);
+  color:rgba(200,220,255,.72);margin-bottom:32px;
+  text-shadow:0 0 24px rgba(100,160,255,.28);}
+
+.pause-rule{width:36px;height:1px;margin:0 auto 28px;
+  background:linear-gradient(90deg,transparent,rgba(150,180,255,.3),transparent);}
+
+.pause-btns{display:flex;gap:10px;align-items:center;justify-content:center;
+  flex-wrap:wrap;margin-bottom:12px;}
+
+/* Botón flotante de pausa — esquina superior derecha durante el juego */
+#btn-pause-float{
+  position:fixed;top:7vh;right:24px;z-index:30;
+  background:none;border:none;
+  border-bottom:1px solid rgba(150,180,255,.18);
+  font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.2em;
+  text-transform:uppercase;color:rgba(150,180,255,.26);
+  cursor:none;display:none;transition:color .3s,border-color .3s;
+  min-height:44px;padding:8px 12px;}
+#btn-pause-float:hover{color:rgba(150,180,255,.7);border-bottom-color:rgba(150,180,255,.48);}
+
+/* Animación de entrada del overlay de pausa */
+#ph-pause.active{animation:pauseIn .3s ease forwards;}
+@keyframes pauseIn{from{opacity:0;backdrop-filter:blur(0)}to{opacity:1;backdrop-filter:blur(22px)}}
 </style>
 </head>
 <body>
 
-<!-- Audio — pon yiruma.mp3 en la misma carpeta -->
+<!-- Audio: coloca yiruma.mp3 en la misma carpeta -->
 <audio id="song" src="yiruma.mp3" preload="auto"></audio>
 
 <div id="cur"></div>
 <div id="lbt"></div>
 <div id="lbb"></div>
-<canvas id="bg-canvas"></canvas>
+
+<!-- Phaser se monta aquí -->
+<div id="phaser-root"></div>
 
 <!-- ═══════════ FASE 0: INTRO ═══════════ -->
 <div class="phase active" id="ph0">
@@ -284,46 +202,11 @@ body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
   <div id="ph0-author">Yiruma, 2002</div>
   <div class="ph0-rule"></div>
   <div id="ph0-sub">Una canción que no necesita letra para decirlo todo.</div>
-  <div id="keys-hint">D · F · J · K &nbsp;—&nbsp; o toca las columnas</div>
+  <div id="keys-hint">D · F · J · K &nbsp;—&nbsp; o toca las columnas &nbsp;·&nbsp; Esc pausa</div>
   <button class="btn show" id="btn-start" onclick="startGame()">Comenzar</button>
 </div>
 
-<!-- ═══════════ FASE 1: JUEGO ════════════ -->
-<div class="phase" id="ph1">
-
-  <!-- HUD -->
-  <div id="hud">
-    <div id="hud-score">0</div>
-    <div id="hud-combo"></div>
-  </div>
-
-  <!-- Área del juego -->
-  <div id="game-area">
-    <div id="lanes">
-      <div class="lane" id="lane-0"></div>
-      <div class="lane" id="lane-1"></div>
-      <div class="lane" id="lane-2"></div>
-      <div class="lane" id="lane-3"></div>
-    </div>
-    <div id="hit-line"></div>
-    <div id="key-row">
-      <div class="key-cap" id="kc-0">D</div>
-      <div class="key-cap" id="kc-1">F</div>
-      <div class="key-cap" id="kc-2">J</div>
-      <div class="key-cap" id="kc-3">K</div>
-    </div>
-    <div id="milestone"><div id="milestone-text"></div></div>
-  </div>
-
-  <!-- Progress -->
-  <div id="progress-bar-wrap">
-    <div id="progress-track"><div id="progress-fill"></div></div>
-    <div id="progress-label">Love Me · Yiruma</div>
-  </div>
-
-</div>
-
-<!-- ═══════════ FASE 2: FIN ═══════════════ -->
+<!-- ═══════════ FASE 2: COMPLETION ═══════ -->
 <div class="phase" id="ph2">
   <div id="ph2-score-wrap">
     <div id="ph2-score-label">Puntuación final</div>
@@ -334,13 +217,99 @@ body::after{content:'';position:fixed;inset:0;z-index:400;pointer-events:none;
   <div id="ph2-phrase"></div>
   <div id="ph2-sub"></div>
   <br>
-  <button class="btn" id="btn-hub" onclick="volverAlHub()">Volver al Universo</button>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+    <button class="btn" id="btn-restart-end" onclick="restartGame()">↺ Reiniciar</button>
+    <button class="btn" id="btn-hub" onclick="volverAlHub()">← Universo</button>
+  </div>
 </div>
 
 <button id="exit-btn" onclick="volverAlHub()">← Universo</button>
+<button id="btn-pause-float" onclick="togglePause()">⏸ pausa</button>
 
+<!-- ═══════════ FASE PAUSA ════════════ -->
+<div class="phase" id="ph-pause">
+  <div id="pause-tag">pausado</div>
+  <div id="pause-score-label">puntuación actual</div>
+  <div id="pause-score">0</div>
+  <div class="pause-rule"></div>
+  <div class="pause-btns">
+    <button class="btn show" id="btn-resume" onclick="resumeFromPause()">▶ Reanudar</button>
+    <button class="btn show" id="btn-restart-pause" onclick="restartGame()">↺ Reiniciar</button>
+  </div>
+  <button class="btn show" id="btn-hub-pause" onclick="volverAlHub()"
+    style="font-size:clamp(.58rem,1vw,.68rem);padding:9px 22px;opacity:.75;border-color:rgba(150,180,255,.14);">
+    ← Universo
+  </button>
+</div>
+
+<!-- ════════════════════════════════════════
+     Phaser 3
+════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 <script>
 'use strict';
+
+/* ════════════════════════════════════════
+   CONFIGURACIÓN — edita aquí
+════════════════════════════════════════ */
+const AUDIO_OFFSET  = 0;       // ms — ajusta si tu MP3 tiene intro diferente
+const FALL_DURATION = 1800;    // ms — tiempo de caída del tile spawn→hit
+const HIT_PERFECT   = 38;      // px — radio perfect desde centro de hit line
+const HIT_GOOD      = 68;      // px — radio good
+const SONG_DURATION = 208000;  // ms — duración total de Love Me (~208s)
+
+const MILESTONES = [
+  [0.12, 'Love Me · Yiruma, 2002'],
+  [0.35, 'Yiruma estudió en el Royal College of Music.\nTú habrías pasado la audición.'],
+  [0.62, 'Algunas canciones no se describen.\nSolo se reconocen.'],
+  [0.84, 'Seúl · Londres · El mundo entero.\nY tu playlist.'],
+];
+
+/*
+  TILE_MAP: [ hitTime_ms, lane 0-3 ]
+  hitTime = momento exacto en que el tile debe estar en la hit line
+  Love Me · Yiruma — tempo ~66 BPM, compás 3/4
+*/
+const TILE_MAP = [
+  // INTRO — notas sueltas (0-12s)
+  [2800,1],[5200,2],[7600,1],[9800,3],[11500,0],
+  // FRASE A (12-32s)
+  [12800,2],[14200,1],[15600,3],[17000,2],[18400,1],
+  [19800,3],[21200,0],[22600,2],[24000,1],[25400,3],
+  [26800,2],[28200,1],[29600,3],[31000,2],
+  // FRASE A reprise (32-52s)
+  [32500,1],[33900,3],[35300,2],[36700,1],[38100,3],
+  [39500,0],[40900,2],[42300,1],[43700,3],[45100,2],
+  [46500,1],[47900,3],[49300,0],[50700,2],
+  // PUENTE (52-72s)
+  [52500,3],[53700,2],[55000,1],[56200,3],[57500,2],
+  [58700,1],[60000,3],[61200,0],[62500,2],[63700,1],
+  [65000,3],[66200,2],[67500,1],[68700,3],[70000,2],[71200,1],
+  // CLÍMAX (72-95s)
+  [72800,3],[73800,2],[74800,1],[75800,3],[76800,2],
+  [77800,1],[78800,3],[80000,0],[81200,2],[82400,1],
+  [83600,3],[84800,2],[86000,1],[87200,3],[88400,0],
+  [89600,2],[90800,1],[92000,3],[93200,2],[94400,1],
+  // RETORNO FRASE A (95-118s)
+  [96000,3],[97500,2],[99000,1],[100500,3],[102000,2],
+  [103500,1],[105000,3],[106500,0],[108000,2],[109500,1],
+  [111000,3],[112500,2],[114000,1],[115500,3],[117000,2],
+  // DESARROLLO MEDIO (118-145s)
+  [119000,1],[120500,3],[122000,2],[123500,1],[125000,3],
+  [126500,2],[128000,1],[129500,3],[131000,0],[132500,2],
+  [134000,1],[135500,3],[137000,2],[138500,1],[140000,3],
+  [141500,2],[143000,1],[144500,3],
+  // REEXPOSICIÓN (145-170s)
+  [146000,2],[147200,1],[148400,3],[149600,2],[150800,1],
+  [152000,3],[153200,0],[154400,2],[155600,1],[156800,3],
+  [158000,2],[159200,1],[160400,3],[161600,2],[162800,1],
+  [164000,3],[165200,0],[166400,2],[167600,1],[168800,3],
+  [170000,2],
+  // CODA (172-207s)
+  [172500,1],[175500,3],[178500,2],[181500,1],[184500,3],
+  [187500,2],[190500,1],[194000,3],[197500,2],[201000,1],
+  [204500,3],[207000,2],
+];
 
 /* ════════════════════════════════════════
    CURSOR
@@ -352,454 +321,638 @@ window.addEventListener('mousemove', e => {
 });
 
 /* ════════════════════════════════════════
-   FONDO — ONDAS DE AGUA
+   PHASER SCENE
 ════════════════════════════════════════ */
-const bgC   = document.getElementById('bg-canvas');
-const bgCtx = bgC.getContext('2d');
-let BW = 0, BH = 0;
+class GameScene extends Phaser.Scene {
+  constructor() { super({ key: 'GameScene' }); }
 
-function resizeBg() {
-  BW = bgC.width  = window.innerWidth;
-  BH = bgC.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeBg);
-resizeBg();
+  /* ── Crear escena ─────────────────────────────────────── */
+  create() {
+    this.L = this.computeLayout();
 
-// Ondas de agua (círculos expandiéndose)
-let ripples = [];
-function addRipple(x, y) {
-  ripples.push({ x, y, r: 0, max: 80 + Math.random() * 60, a: 0.35 });
-}
+    // Capturar teclas del juego para evitar comportamiento por defecto
+    // Nota: ESC se maneja globalmente en el DOM (no aquí) para no interferir con el overlay
+    this.input.keyboard.addCapture([
+      Phaser.Input.Keyboard.KeyCodes.D,
+      Phaser.Input.Keyboard.KeyCodes.F,
+      Phaser.Input.Keyboard.KeyCodes.J,
+      Phaser.Input.Keyboard.KeyCodes.K,
+      Phaser.Input.Keyboard.KeyCodes.SPACE,
+      Phaser.Input.Keyboard.KeyCodes.UP,
+      Phaser.Input.Keyboard.KeyCodes.DOWN,
+    ]);
 
-// Notas musicales flotantes de fondo
-const NOTES = Array.from({ length: 18 }, () => ({
-  x: Math.random(), y: Math.random(),
-  vy: -(0.06 + Math.random() * 0.12) / 1000,
-  sym: ['♩','♪','♫','♬'][Math.floor(Math.random() * 4)],
-  a: 0.03 + Math.random() * 0.06,
-  sz: 11 + Math.floor(Math.random() * 9),
-}));
+    // Handlers de teclado — respuesta inmediata (no espera el siguiente frame)
+    this.input.keyboard.on('keydown-D', () => { if (this.isPlaying) this.hitLane(0); });
+    this.input.keyboard.on('keydown-F', () => { if (this.isPlaying) this.hitLane(1); });
+    this.input.keyboard.on('keydown-J', () => { if (this.isPlaying) this.hitLane(2); });
+    this.input.keyboard.on('keydown-K', () => { if (this.isPlaying) this.hitLane(3); });
 
-function renderBg() {
-  bgCtx.fillStyle = 'rgba(5,4,8,.22)';
-  bgCtx.fillRect(0, 0, BW, BH);
+    // Touch/click — siempre habilitado para detectar la lane
+    this.input.on('pointerdown', ptr => {
+      if (this.isPlaying) this.onPointerDown(ptr);
+    });
 
-  // Notas flotantes
-  NOTES.forEach(n => {
-    n.y += n.vy;
-    if (n.y < -0.05) n.y = 1.05;
-    bgCtx.globalAlpha = n.a;
-    bgCtx.fillStyle   = 'rgba(150,180,255,1)';
-    bgCtx.font        = `${n.sz}px serif`;
-    bgCtx.textAlign   = 'center';
-    bgCtx.fillText(n.sym, n.x * BW, n.y * BH);
-  });
+    // ── Notas musicales de fondo ─────────────────────────
+    this.createAmbientNotes();
 
-  // Ondas de agua
-  ripples = ripples.filter(r => r.a > 0);
-  ripples.forEach(r => {
-    r.r += 1.8;
-    r.a -= 0.008;
-    bgCtx.globalAlpha = Math.max(0, r.a);
-    bgCtx.strokeStyle = `rgba(120,160,255,${r.a})`;
-    bgCtx.lineWidth   = 1.5;
-    bgCtx.beginPath();
-    bgCtx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
-    bgCtx.stroke();
-    // segundo anillo más suave
-    bgCtx.globalAlpha = Math.max(0, r.a * 0.4);
-    bgCtx.beginPath();
-    bgCtx.arc(r.x, r.y, r.r * 0.6, 0, Math.PI * 2);
-    bgCtx.stroke();
-  });
+    // ── Gráficos de ondas (ripples) ─────────────────────
+    this.rippleGfx = this.add.graphics().setDepth(8);
+    this.rippleList = [];
 
-  bgCtx.globalAlpha = 1;
-  requestAnimationFrame(renderBg);
-}
-renderBg();
+    // Ondas ambientales periódicas
+    this.time.addEvent({
+      delay: 4200,
+      callback: this.addAmbientRipple,
+      callbackScope: this,
+      loop: true,
+    });
 
-/* ════════════════════════════════════════
-   CONFIGURACIÓN DEL JUEGO
-════════════════════════════════════════ */
-// Ajusta AUDIO_OFFSET si tu MP3 tiene un intro diferente (en ms)
-const AUDIO_OFFSET  = 0;
-// Tiempo que tarda un tile en caer desde el spawn hasta la hit zone (ms)
-const FALL_DURATION = 1800;
-// Ventana de acierto: Perfect ±35px, Good ±65px del centro de hit zone
-const HIT_PERFECT   = 35;
-const HIT_GOOD      = 65;
-// Duración total de Love Me (~208s) — ajusta si tu versión es diferente
-const SONG_DURATION = 208000;
+    // ── Elementos del juego (ocultos hasta startGame) ────
+    this.buildGameUI();
+    this.setGameVisible(false);
 
-// Milestones: [progreso 0-1, texto]
-const MILESTONES = [
-  [0.12, 'Love Me · Yiruma, 2002'],
-  [0.35, 'Yiruma estudió en el Royal College of Music.\nTú habrías pasado la audición.'],
-  [0.62, 'Algunas canciones no se describen.\nSolo se reconocen.'],
-  [0.84, 'Seúl · Londres · El mundo entero.\nY tu playlist.'],
-];
+    // ── Estado ───────────────────────────────────────────
+    this.isPlaying    = false;
+    this.isPaused     = false;
+    this.activeTiles  = [];   // { hitTime, lane, obj }
+    this.tileQueue    = [];
+    this.score        = 0;
+    this.combo        = 0;
+    this.maxCombo     = 0;
+    this.totalHits    = 0;
+    this.totalMisses  = 0;
+    this.milestoneIdx = 0;
+    this.msActive     = false;
 
-/* ════════════════════════════════════════
-   MAPA DE TILES — Love Me (Yiruma)
-   Formato: [hit_time_ms, lane 0-3]
-   Love Me: tempo ~66 BPM, 3/4 compás
-   Duración estándar ~208s
-   Ajusta AUDIO_OFFSET si tu intro difiere
-════════════════════════════════════════ */
-const TILE_MAP = [
-  // INTRO — entrada suave, notas sueltas (0-12s)
-  [2800,1],[5200,2],[7600,1],[9800,3],[11500,0],
+    this.audioEl = document.getElementById('song');
 
-  // FRASE A — melodía principal (12-32s)
-  [12800,2],[14200,1],[15600,3],[17000,2],[18400,1],
-  [19800,3],[21200,0],[22600,2],[24000,1],[25400,3],
-  [26800,2],[28200,1],[29600,3],[31000,2],
-
-  // FRASE A — repetición (32-52s)
-  [32500,1],[33900,3],[35300,2],[36700,1],[38100,3],
-  [39500,0],[40900,2],[42300,1],[43700,3],[45100,2],
-  [46500,1],[47900,3],[49300,0],[50700,2],
-
-  // PUENTE — centro expresivo (52-72s)
-  [52500,3],[53700,2],[55000,1],[56200,3],[57500,2],
-  [58700,1],[60000,3],[61200,0],[62500,2],[63700,1],
-  [65000,3],[66200,2],[67500,1],[68700,3],[70000,2],[71200,1],
-
-  // CLÍMAX — sección más intensa (72-95s)
-  [72800,3],[73800,2],[74800,1],[75800,3],[76800,2],
-  [77800,1],[78800,3],[80000,0],[81200,2],[82400,1],
-  [83600,3],[84800,2],[86000,1],[87200,3],[88400,0],
-  [89600,2],[90800,1],[92000,3],[93200,2],[94400,1],
-
-  // RETORNO FRASE A (95-118s)
-  [96000,3],[97500,2],[99000,1],[100500,3],[102000,2],
-  [103500,1],[105000,3],[106500,0],[108000,2],[109500,1],
-  [111000,3],[112500,2],[114000,1],[115500,3],[117000,2],
-
-  // DESARROLLO MEDIO (118-145s)
-  [119000,1],[120500,3],[122000,2],[123500,1],[125000,3],
-  [126500,2],[128000,1],[129500,3],[131000,0],[132500,2],
-  [134000,1],[135500,3],[137000,2],[138500,1],[140000,3],
-  [141500,2],[143000,1],[144500,3],
-
-  // REEXPOSICIÓN — vuelve el tema con más peso (145-170s)
-  [146000,2],[147200,1],[148400,3],[149600,2],[150800,1],
-  [152000,3],[153200,0],[154400,2],[155600,1],[156800,3],
-  [158000,2],[159200,1],[160400,3],[161600,2],[162800,1],
-  [164000,3],[165200,0],[166400,2],[167600,1],[168800,3],
-  [170000,2],
-
-  // CODA — desvanecimiento final (172-207s)
-  [172500,1],[175500,3],[178500,2],[181500,1],[184500,3],
-  [187500,2],[190500,1],[194000,3],[197500,2],[201000,1],
-  [204500,3],[207000,2],
-];
-
-/* ════════════════════════════════════════
-   ESTADO DEL JUEGO
-════════════════════════════════════════ */
-let score       = 0;
-let combo       = 0;
-let maxCombo    = 0;
-let totalHits   = 0;
-let totalMisses = 0;
-let activeTiles = [];   // tiles en pantalla
-let tileQueue   = [];   // tiles pendientes de spawner
-let gameRunning = false;
-let gameRAF     = null;
-let milestoneIdx= 0;
-let msShown     = false; // milestone visible
-
-const audio = document.getElementById('song');
-let gameStarted = false;
-
-/* ════════════════════════════════════════
-   LAYOUT — dimensiones del área de juego
-════════════════════════════════════════ */
-let GA = {}; // game area metrics
-
-function calcLayout() {
-  const el    = document.getElementById('game-area');
-  const rect  = el.getBoundingClientRect();
-  const laneW = rect.width / 4;
-
-  // Hit line está a 82% del alto del game-area
-  const hitLineY = rect.height * 0.82;
-  document.getElementById('hit-line').style.top = hitLineY + 'px';
-
-  // Key row justo debajo de la hit line
-  const keyRow = document.getElementById('key-row');
-  keyRow.style.top    = (hitLineY + 2) + 'px';
-  keyRow.style.height = (rect.height - hitLineY - 2) + 'px';
-
-  GA = {
-    width:   rect.width,
-    height:  rect.height,
-    laneW,
-    hitY:    hitLineY,   // y de la hit line dentro del game-area
-    tileH:   Math.max(48, rect.height * 0.075), // altura del tile
-    spawnY:  -80,        // spawn fuera del borde superior
-  };
-}
-
-/* ════════════════════════════════════════
-   INICIAR JUEGO
-════════════════════════════════════════ */
-async function startGame() {
-  // Comprobar que el audio está disponible
-  if (audio.readyState < 2) {
-    // Esperar a que cargue
-    await new Promise(res => audio.addEventListener('canplay', res, { once: true }));
+    // Exponer para acceso global
+    window.gameScene = this;
   }
 
-  // Transición a fase 1
-  document.getElementById('ph0').classList.remove('active');
-  document.getElementById('ph1').classList.add('active');
-  document.getElementById('exit-btn').style.display = 'block';
+  /* ── Layout ───────────────────────────────────────────── */
+  computeLayout() {
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const GAME_W = Math.min(480, W * 0.96);
+    const GAME_H = H * 0.72;
+    const GAME_X = (W - GAME_W) / 2;
+    const GAME_Y = H * 0.14;
+    const LANE_W = GAME_W / 4;
+    const TILE_H = Math.max(48, GAME_H * 0.075);
+    // Hit line al 82% del alto del game area (absoluto)
+    const HIT_Y  = GAME_Y + GAME_H * 0.82;
+    // Spawn: el tile nace con su centro justo encima del borde del game area
+    const SPAWN_Y = GAME_Y - TILE_H / 2;
 
-  calcLayout();
-
-  // Preparar cola de tiles (con offset de spawn)
-  tileQueue = TILE_MAP.map(([t, l]) => ({
-    hitTime:   t + AUDIO_OFFSET,
-    spawnTime: t + AUDIO_OFFSET - FALL_DURATION,
-    lane:      l,
-    spawned:   false,
-  })).sort((a, b) => a.spawnTime - b.spawnTime);
-
-  // Reset estado
-  score = combo = maxCombo = totalHits = totalMisses = 0;
-  activeTiles = []; milestoneIdx = 0; msShown = false;
-  updateHUD();
-
-  // Pequeño conteo regresivo
-  const gameArea = document.getElementById('game-area');
-  for (const n of ['3','2','1','']) {
-    const el = makeFeedbackEl(n || '¡Ya!', 'perfect', gameArea.offsetWidth / 2, GA.hitY - 30);
-    el.style.fontSize = n ? '2rem' : '1rem';
-    el.style.letterSpacing = '.1em';
-    document.getElementById('game-area').appendChild(el);
-    await sleep(n ? 800 : 400);
+    return { W, H, GAME_W, GAME_H, GAME_X, GAME_Y, LANE_W, TILE_H, HIT_Y, SPAWN_Y };
   }
 
-  // Iniciar audio y loop
-  audio.currentTime = 0;
-  audio.play().catch(() => {}); // autoplay puede fallar en algunos browsers
-  gameRunning = true;
-  gameStarted = true;
-  gameLoop();
-}
+  /* ── Notas musicales flotantes (ambientales) ──────────── */
+  createAmbientNotes() {
+    const SYMS = ['♩', '♪', '♫', '♬'];
+    this.ambientNotes = [];
+    const { W, H } = this.L;
 
-/* ════════════════════════════════════════
-   LOOP PRINCIPAL
-════════════════════════════════════════ */
-function gameLoop() {
-  if (!gameRunning) return;
+    for (let i = 0; i < 18; i++) {
+      const note = this.add.text(
+        Phaser.Math.FloatBetween(0, W),
+        Phaser.Math.FloatBetween(0, H),
+        SYMS[i % 4],
+        { fontFamily: 'serif', fontSize: (11 + (i % 9)) + 'px', color: '#96B4FF' }
+      ).setAlpha(0.03 + Math.random() * 0.06).setDepth(1);
 
-  const now = (audio.currentTime * 1000) || 0;
-
-  // Spawner: crear tiles según el tiempo del audio
-  while (tileQueue.length > 0 && tileQueue[0].spawnTime <= now) {
-    spawnTile(tileQueue.shift());
-  }
-
-  // Mover tiles y detectar misses
-  const gameArea = document.getElementById('game-area');
-  const toRemove = [];
-
-  activeTiles.forEach(tile => {
-    const elapsed  = now - tile.spawnTime;
-    const progress = elapsed / FALL_DURATION;
-    const y        = GA.spawnY + progress * (GA.hitY - GA.spawnY + GA.tileH);
-
-    tile.el.style.top = y + 'px';
-
-    // Auto-miss: pasó la hit zone + margen
-    if (y > GA.hitY + HIT_GOOD + 10) {
-      toRemove.push(tile);
-      flashLane(tile.lane, false);
-      showFeedback('MISS', tile.lane, GA.hitY, 'miss');
-      combo = 0;
-      totalMisses++;
-      updateHUD();
-      tile.el.remove();
+      note.vy = -(0.04 + Math.random() * 0.08); // px/ms, hacia arriba
+      this.ambientNotes.push(note);
     }
-  });
-  activeTiles = activeTiles.filter(t => !toRemove.includes(t));
-
-  // Progreso de la canción
-  const prog = Math.min(1, now / SONG_DURATION);
-  document.getElementById('progress-fill').style.width = (prog * 100) + '%';
-
-  // Milestones
-  checkMilestone(prog);
-
-  // Fin de canción
-  if (now > SONG_DURATION || (tileQueue.length === 0 && activeTiles.length === 0 && now > 10000)) {
-    endGame();
-    return;
   }
 
-  gameRAF = requestAnimationFrame(gameLoop);
-}
+  /* ── Construir UI del juego ───────────────────────────── */
+  buildGameUI() {
+    const L = this.L;
+    const { GAME_X, GAME_Y, GAME_W, GAME_H, LANE_W, HIT_Y, W, H, TILE_H } = L;
 
-/* ════════════════════════════════════════
-   SPAWN TILE
-════════════════════════════════════════ */
-function spawnTile(tileData) {
-  const gameArea = document.getElementById('game-area');
-  const el       = document.createElement('div');
-  el.className   = 'tile';
+    // Generar texturas de tile una sola vez
+    const tH = Math.ceil(TILE_H);
+    const gTex = this.make.graphics({ add: false });
 
-  const x     = tileData.lane * GA.laneW + GA.laneW * 0.06;
-  const width = GA.laneW * 0.88;
+    // Tile normal — azul
+    gTex.fillStyle(0x8BB5FF, 0.92);
+    gTex.fillRoundedRect(2, 2, 96, tH - 4, 4);
+    gTex.lineStyle(1, 0xFFFFFF, 0.2);
+    gTex.strokeRoundedRect(2, 2, 96, tH - 4, 4);
+    gTex.generateTexture('tile', 100, tH);
+    gTex.clear();
 
-  el.style.cssText = `
-    left:${x}px;
-    top:${GA.spawnY}px;
-    width:${width}px;
-    height:${GA.tileH}px;
-  `;
+    // Tile perfect — dorado
+    gTex.fillStyle(0xD4C864, 0.95);
+    gTex.fillRoundedRect(2, 2, 96, tH - 4, 4);
+    gTex.lineStyle(1, 0xFFE840, 0.5);
+    gTex.strokeRoundedRect(2, 2, 96, tH - 4, 4);
+    gTex.generateTexture('tile-gold', 100, tH);
+    gTex.destroy();
 
-  gameArea.appendChild(el);
-  activeTiles.push({ ...tileData, el, spawnTime: (audio.currentTime * 1000) - (FALL_DURATION - (tileData.hitTime - tileData.spawnTime)) });
+    // ── Fondo de lanes ────────────────────────────────────
+    this.laneGfx = this.add.graphics().setDepth(2);
+    const laneColors = [0x5064B4, 0x6482DC, 0x6482DC, 0x5064B4];
+    const laneAlphas = [0.04, 0.03, 0.03, 0.04];
+    laneColors.forEach((col, i) => {
+      this.laneGfx.fillStyle(col, laneAlphas[i]);
+      this.laneGfx.fillRect(GAME_X + i * LANE_W, GAME_Y, LANE_W, GAME_H);
+    });
+    // Separadores
+    this.laneGfx.lineStyle(1, 0xFFFFFF, 0.04);
+    for (let i = 1; i < 4; i++) {
+      this.laneGfx.lineBetween(GAME_X + i * LANE_W, GAME_Y, GAME_X + i * LANE_W, GAME_Y + GAME_H);
+    }
 
-  // Recalcular spawnTime real basado en audio actual
-  const tileObj = activeTiles[activeTiles.length - 1];
-  tileObj.spawnTime = audio.currentTime * 1000 - (FALL_DURATION - FALL_DURATION);
-  // Corrección: el tile debería estar en GA.spawnY en este momento
-  tileObj.spawnTime = audio.currentTime * 1000;
-}
+    // ── Hit line ──────────────────────────────────────────
+    this.hitLineGfx = this.add.graphics().setDepth(6);
+    this.hitLineGfx.lineStyle(8, 0x6490FF, 0.08);
+    this.hitLineGfx.lineBetween(GAME_X, HIT_Y, GAME_X + GAME_W, HIT_Y);
+    this.hitLineGfx.lineStyle(2, 0x96B4FF, 0.45);
+    this.hitLineGfx.lineBetween(GAME_X, HIT_Y, GAME_X + GAME_W, HIT_Y);
 
-/* ════════════════════════════════════════
-   DETECCIÓN DE GOLPE
-════════════════════════════════════════ */
-function hitLane(lane) {
-  if (!gameRunning) return;
+    // ── Máscara de game area para recortar tiles ──────────
+    this.tileMaskShape = this.make.graphics({ add: false });
+    this.tileMaskShape.fillRect(GAME_X, GAME_Y, GAME_W, GAME_H);
+    const mask = this.tileMaskShape.createGeometryMask();
 
-  // Flash visual en la tecla
-  const kc = document.getElementById('kc-' + lane);
-  kc.classList.add('pressed');
-  setTimeout(() => kc.classList.remove('pressed'), 120);
+    this.tileContainer    = this.add.container(0, 0).setMask(mask).setDepth(5);
+    this.feedbackContainer = this.add.container(0, 0).setDepth(9);
 
-  // Añadir onda de agua centrada en la lane
-  const gameArea   = document.getElementById('game-area');
-  const areaRect   = gameArea.getBoundingClientRect();
-  const laneCenter = areaRect.left + lane * GA.laneW + GA.laneW / 2;
-  addRipple(laneCenter, areaRect.top + GA.hitY);
+    // ── Teclas visuales (key caps) ─────────────────────────
+    const KEY_LABELS = ['D', 'F', 'J', 'K'];
+    this.keyCaps = KEY_LABELS.map((label, i) => {
+      const capX = GAME_X + i * LANE_W;
+      const capY = HIT_Y + 2;
+      const capH = GAME_Y + GAME_H - capY;
 
-  // Buscar el tile más cercano a la hit zone en este lane
-  const tilesInLane = activeTiles
-    .filter(t => t.lane === lane)
-    .map(t => {
-      const elapsed  = (audio.currentTime * 1000) - t.spawnTime;
+      const bg = this.add.graphics().setDepth(4);
+      bg.fillStyle(0x000000, 0.25);
+      bg.fillRect(capX, capY, LANE_W - (i < 3 ? 1 : 0), capH);
+
+      const text = this.add.text(capX + LANE_W / 2, capY + capH / 2, label, {
+        fontFamily: "'Cinzel', serif", fontSize: '10px', color: '#ffffff',
+      }).setOrigin(0.5).setAlpha(0.18).setDepth(4);
+
+      return { bg, text };
+    });
+
+    // ── Flash de lane (reutilizable) ─────────────────────
+    this.laneFlash = Array.from({ length: 4 }, (_, i) => {
+      const gfx = this.add.graphics().setDepth(3).setAlpha(0);
+      return gfx;
+    });
+
+    // ── HUD — Score y Combo ──────────────────────────────
+    const HUD_CY = H * 0.1;
+    const scoreFS = Math.max(18, Math.min(32, W * 0.03));
+    const comboFS = Math.max(9, Math.min(12, W * 0.012));
+
+    this.scoreText = this.add.text(W / 2 - W * 0.06, HUD_CY, '0', {
+      fontFamily: "'Cinzel Decorative', serif",
+      fontSize: scoreFS + 'px',
+      color: '#C8DCFF',
+      shadow: { x: 0, y: 0, color: '#6490FF', blur: 18, fill: true },
+    }).setOrigin(1, 0.5).setDepth(10);
+
+    this.comboText = this.add.text(W / 2 + W * 0.02, HUD_CY, '', {
+      fontFamily: "'Cinzel', serif",
+      fontSize: comboFS + 'px',
+      color: '#96B4FF',
+    }).setOrigin(0, 0.5).setAlpha(0.55).setDepth(10);
+
+    // ── Barra de progreso ────────────────────────────────
+    const PBW  = Math.min(400, W * 0.7);
+    const PBX  = (W - PBW) / 2;
+    const PBY  = H * 0.924;
+
+    const pbBg = this.add.graphics().setDepth(10);
+    pbBg.fillStyle(0xFFFFFF, 0.08);
+    pbBg.fillRect(PBX, PBY, PBW, 2);
+    this.pbBg = pbBg;
+
+    this.progressFill = this.add.graphics().setDepth(10);
+    this.progX = PBX; this.progY = PBY; this.progW = PBW;
+
+    this.progressLabel = this.add.text(W / 2, PBY + 7, 'Love Me · Yiruma', {
+      fontFamily: "'Cinzel', serif", fontSize: '9px', color: '#ffffff',
+    }).setOrigin(0.5, 0).setAlpha(0.2).setDepth(10);
+
+    // ── Texto de milestone ───────────────────────────────
+    const msFS = Math.max(13, Math.min(20, W * 0.02));
+    this.msText = this.add.text(W / 2, H / 2, '', {
+      fontFamily: "'Playfair Display', serif",
+      fontSize: msFS + 'px',
+      color: '#C8D7FF',
+      align: 'center',
+      wordWrap: { width: Math.min(340, W * 0.85) },
+      lineSpacing: 5,
+    }).setOrigin(0.5).setAlpha(0).setDepth(11);
+
+    // Recolectar para show/hide colectivo
+    this.gameElements = [
+      this.laneGfx, this.hitLineGfx,
+      this.tileContainer, this.feedbackContainer,
+      this.scoreText, this.comboText,
+      this.pbBg, this.progressFill, this.progressLabel,
+      this.msText,
+      ...this.laneFlash,
+      ...this.keyCaps.flatMap(k => [k.bg, k.text]),
+    ];
+  }
+
+  setGameVisible(v) {
+    this.gameElements.forEach(el => el.setVisible(v));
+  }
+
+  /* ── Iniciar el juego ─────────────────────────────────── */
+  async startGame() {
+    this.L = this.computeLayout(); // recalcular por si cambió el tamaño
+
+    // Reset
+    this.score = this.combo = this.maxCombo = 0;
+    this.totalHits = this.totalMisses = 0;
+    this.milestoneIdx = 0; this.msActive = false;
+
+    this.tileContainer.removeAll(true);
+    this.feedbackContainer.removeAll(true);
+    this.activeTiles = [];
+
+    // Preparar cola de tiles
+    this.tileQueue = TILE_MAP
+      .map(([t, l]) => ({ hitTime: t + AUDIO_OFFSET, lane: l }))
+      .sort((a, b) => a.hitTime - b.hitTime);
+
+    this.setGameVisible(true);
+    this.updateHUD();
+
+    // Cuenta regresiva
+    await this.countdown();
+
+    // Iniciar audio
+    this.audioEl.currentTime = 0;
+    this.audioEl.play().catch(() => {});
+    this.isPlaying = true;
+  }
+
+  countdown() {
+    return new Promise(resolve => {
+      const { W, HIT_Y } = this.L;
+      const fs = Math.max(28, Math.min(56, W * 0.07));
+      let n = 3;
+
+      const next = () => {
+        const label = n > 0 ? String(n) : '¡Ya!';
+        const color = n > 0 ? '#C8DCFF' : '#FFDC80';
+        const t = this.add.text(W / 2, HIT_Y - 44, label, {
+          fontFamily: "'Cinzel Decorative', serif",
+          fontSize: (n > 0 ? fs : fs * 0.65) + 'px',
+          color,
+        }).setOrigin(0.5).setAlpha(0).setDepth(20);
+
+        this.tweens.add({
+          targets: t,
+          alpha: { from: 0, to: 0.9 },
+          duration: 180,
+          yoyo: true, hold: 380,
+          onComplete: () => {
+            t.destroy(); n--;
+            if (n >= 0) next(); else resolve();
+          }
+        });
+      };
+      next();
+    });
+  }
+
+  /* ── Loop de actualización ────────────────────────────── */
+  update(time, delta) {
+    // Siempre: notas flotantes
+    this.updateAmbientNotes(delta);
+    // Siempre: ripples
+    this.renderRipples();
+
+    if (!this.isPlaying) return;
+
+    const audioTime = this.audioEl.currentTime * 1000;
+
+    // Spawner: crea tiles según el tiempo del audio
+    // Un tile se spawna FALL_DURATION ms antes de su hitTime
+    while (this.tileQueue.length > 0 &&
+           this.tileQueue[0].hitTime - FALL_DURATION <= audioTime) {
+      this.spawnTile(this.tileQueue.shift());
+    }
+
+    // Actualizar posición y detectar misses
+    const missed = [];
+    const L = this.L;
+
+    for (const tile of this.activeTiles) {
+      /*
+        Fórmula de posición:
+        - En spawnTime = hitTime - FALL_DURATION: centerY = SPAWN_Y
+        - En hitTime: centerY = HIT_Y
+        - progress = 0..1 → interpolación lineal
+      */
+      const elapsed  = audioTime - (tile.hitTime - FALL_DURATION);
       const progress = elapsed / FALL_DURATION;
-      const y        = GA.spawnY + progress * (GA.hitY - GA.spawnY + GA.tileH);
-      return { tile: t, y, center: y + GA.tileH / 2 };
-    })
-    .sort((a, b) => Math.abs(a.center - GA.hitY) - Math.abs(b.center - GA.hitY));
+      const centerY  = L.SPAWN_Y + progress * (L.HIT_Y - L.SPAWN_Y);
 
-  if (tilesInLane.length === 0) return;
+      tile.obj.y = centerY;
 
-  const { tile, center } = tilesInLane[0];
-  const dist = Math.abs(center - GA.hitY);
+      // Auto-miss: el tile pasó la zona de golpe
+      if (centerY > L.HIT_Y + HIT_GOOD + 18) {
+        missed.push(tile);
+        this.combo = 0;
+        this.totalMisses++;
+        this.showFeedback('MISS', tile.lane, 'miss');
+        this.flashLane(tile.lane, false);
+        tile.obj.destroy();
+      }
+    }
+    if (missed.length) {
+      this.activeTiles = this.activeTiles.filter(t => !missed.includes(t));
+    }
 
-  let type = null;
-  if (dist <= HIT_PERFECT) type = 'perfect';
-  else if (dist <= HIT_GOOD) type = 'good';
+    // Barra de progreso
+    this.updateProgress(Math.min(1, audioTime / SONG_DURATION));
 
-  if (type) {
-    // Acierto
-    const pts = type === 'perfect' ? 100 : 50;
-    score += pts * (1 + Math.floor(combo / 10));
-    combo++;
-    if (combo > maxCombo) maxCombo = combo;
-    totalHits++;
+    // Milestones
+    this.checkMilestone(Math.min(1, audioTime / SONG_DURATION));
 
-    tile.el.remove();
-    activeTiles = activeTiles.filter(t => t !== tile);
-    flashLane(lane, true);
-    showFeedback(type === 'perfect' ? 'PERFECT' : 'GOOD', lane, GA.hitY, type);
-    updateHUD();
+    // HUD
+    this.updateHUD();
+
+    // Fin
+    const allSpawned = this.tileQueue.length === 0;
+    const allCleared = this.activeTiles.length === 0;
+    if (audioTime > SONG_DURATION || (allSpawned && allCleared && audioTime > 15000)) {
+      this.isPlaying = false;
+      this.audioEl.pause();
+      window.onGameEnd(this.score, this.totalHits, this.totalMisses, this.maxCombo);
+    }
+  }
+
+  updateAmbientNotes(delta) {
+    const { W, H } = this.L;
+    for (const note of this.ambientNotes) {
+      note.y += note.vy * delta;
+      if (note.y < -20) {
+        note.y = H + 20;
+        note.x = Phaser.Math.FloatBetween(0, W);
+      }
+    }
+  }
+
+  renderRipples() {
+    const gfx = this.rippleGfx;
+    gfx.clear();
+    this.rippleList = this.rippleList.filter(r => r.alpha > 0.003);
+    for (const r of this.rippleList) {
+      r.r    += 1.8;
+      r.alpha -= 0.008;
+      if (r.alpha <= 0) continue;
+      gfx.lineStyle(1.5, 0x78A0FF, Math.max(0, r.alpha));
+      gfx.strokeCircle(r.x, r.y, r.r);
+      gfx.lineStyle(1, 0x78A0FF, Math.max(0, r.alpha * 0.4));
+      gfx.strokeCircle(r.x, r.y, r.r * 0.6);
+    }
+  }
+
+  addAmbientRipple() {
+    const { GAME_X, GAME_Y, GAME_W, GAME_H } = this.L;
+    this.rippleList.push({
+      x: Phaser.Math.FloatBetween(GAME_X, GAME_X + GAME_W),
+      y: Phaser.Math.FloatBetween(GAME_Y, GAME_Y + GAME_H),
+      r: 0, alpha: 0.08,
+    });
+  }
+
+  /* ── Spawn tile ───────────────────────────────────────── */
+  spawnTile(tileData) {
+    const L = this.L;
+    const x = L.GAME_X + tileData.lane * L.LANE_W + L.LANE_W / 2;
+    const w = L.LANE_W * 0.88;
+
+    const img = this.add.image(x, L.SPAWN_Y, 'tile')
+      .setDisplaySize(w, L.TILE_H);
+
+    this.tileContainer.add(img);
+    this.activeTiles.push({ hitTime: tileData.hitTime, lane: tileData.lane, obj: img });
+  }
+
+  /* ── Hit de lane ──────────────────────────────────────── */
+  hitLane(lane) {
+    const L = this.L;
+    const audioTime = this.audioEl.currentTime * 1000;
+
+    // Flash visual en key cap
+    this.flashKeyCap(lane);
+
+    // Ripple en la hit line
+    this.rippleList.push({
+      x: L.GAME_X + lane * L.LANE_W + L.LANE_W / 2,
+      y: L.HIT_Y,
+      r: 0, alpha: 0.35,
+    });
+
+    // Buscar tile más cercano a la hit line en esta lane
+    let best = null, bestDist = Infinity;
+    for (const tile of this.activeTiles) {
+      if (tile.lane !== lane) continue;
+      const elapsed  = audioTime - (tile.hitTime - FALL_DURATION);
+      const centerY  = L.SPAWN_Y + (elapsed / FALL_DURATION) * (L.HIT_Y - L.SPAWN_Y);
+      const dist     = Math.abs(centerY - L.HIT_Y);
+      if (dist < bestDist) { bestDist = dist; best = tile; }
+    }
+
+    // Sin tile en rango → miss sound / no acción
+    if (!best || bestDist > HIT_GOOD) return;
+
+    const isPerfect = bestDist <= HIT_PERFECT;
+    const pts = (isPerfect ? 100 : 50) * (1 + Math.floor(this.combo / 10));
+
+    this.score    += pts;
+    this.combo++;
+    if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+    this.totalHits++;
+
+    // Feedback visual en tile
+    if (isPerfect) best.obj.setTexture('tile-gold');
+    this.flashLane(lane, true);
+    this.showFeedback(isPerfect ? 'PERFECT' : 'GOOD', lane, isPerfect ? 'perfect' : 'good');
+
+    // Fade out del tile
+    const tileObj = best.obj;
+    this.activeTiles = this.activeTiles.filter(t => t !== best);
+    this.tweens.add({
+      targets: tileObj,
+      alpha: 0, scaleY: 0.6,
+      duration: 90,
+      ease: 'Quad.easeOut',
+      onComplete: () => tileObj.destroy(),
+    });
+  }
+
+  flashKeyCap(lane) {
+    const kc = this.keyCaps[lane];
+    if (!kc) return;
+    kc.text.setAlpha(0.75);
+    this.time.delayedCall(120, () => kc.text.setAlpha(0.18));
+  }
+
+  flashLane(lane, success) {
+    const gfx = this.laneFlash[lane];
+    const L   = this.L;
+    gfx.clear();
+    gfx.fillStyle(success ? 0x96B4FF : 0xC83C3C, success ? 0.12 : 0.10);
+    gfx.fillRect(L.GAME_X + lane * L.LANE_W, L.GAME_Y, L.LANE_W, L.GAME_H);
+    gfx.setAlpha(1);
+
+    // Quitar tween anterior si existe
+    if (gfx._flashTween) gfx._flashTween.stop();
+    gfx._flashTween = this.tweens.add({
+      targets: gfx,
+      alpha: 0,
+      duration: success ? 130 : 260,
+      ease: 'Linear',
+    });
+  }
+
+  showFeedback(text, lane, type) {
+    const L  = this.L;
+    const x  = L.GAME_X + lane * L.LANE_W + L.LANE_W / 2;
+    const y  = L.HIT_Y - 22;
+    const fs = Math.max(11, Math.min(15, L.W * 0.015));
+    const colors = { perfect: '#FFDC50', good: '#B4C8FF', miss: '#DC5050' };
+
+    const t = this.add.text(x, y, text, {
+      fontFamily: "'Cinzel', serif",
+      fontSize: fs + 'px',
+      color: colors[type] || '#B4C8FF',
+    }).setOrigin(0.5).setDepth(12);
+
+    this.feedbackContainer.add(t);
+
+    this.tweens.add({
+      targets: t,
+      y: y - 58,
+      alpha: 0,
+      duration: 680,
+      ease: 'Quad.easeOut',
+      onComplete: () => this.feedbackContainer.remove(t, true),
+    });
+  }
+
+  updateHUD() {
+    if (!this.scoreText) return;
+    this.scoreText.setText(this.score.toLocaleString());
+
+    if (this.combo >= 5) {
+      this.comboText.setText(this.combo + ' · combo').setColor('#B4D2FF').setAlpha(0.9);
+    } else {
+      this.comboText.setText(this.combo > 0 ? this.combo + ' combo' : '').setAlpha(0.55);
+    }
+  }
+
+  updateProgress(prog) {
+    if (!this.progressFill) return;
+    this.progressFill.clear();
+    this.progressFill.fillStyle(0x96B4FF, 0.5);
+    this.progressFill.fillRect(this.progX, this.progY, this.progW * prog, 2);
+  }
+
+  checkMilestone(progress) {
+    if (this.milestoneIdx >= MILESTONES.length || this.msActive) return;
+    if (progress < MILESTONES[this.milestoneIdx][0]) return;
+
+    const text = MILESTONES[this.milestoneIdx][1];
+    this.milestoneIdx++;
+    this.msActive = true;
+
+    this.msText.setText(text).setAlpha(0);
+    this.tweens.add({
+      targets:  this.msText,
+      alpha:    0.75,
+      duration: 900,
+      ease:     'Sine.easeInOut',
+      yoyo:     true,
+      hold:     3000,
+      onComplete: () => { this.msActive = false; },
+    });
+  }
+
+  /* ── Touch ────────────────────────────────────────────── */
+  onPointerDown(ptr) {
+    const L = this.L;
+    const relX = ptr.x - L.GAME_X;
+    if (relX < 0 || relX > L.GAME_W) return;
+    if (ptr.y < L.GAME_Y || ptr.y > L.GAME_Y + L.GAME_H) return;
+    const lane = Math.min(3, Math.max(0, Math.floor(relX / L.LANE_W)));
+    this.hitLane(lane);
+  }
+
+  /* ── Pausa / reanuda ─────────────────────────────────── */
+  pauseGame() {
+    if (!this.isPlaying) return;
+    this.isPlaying = false;
+    this.audioEl.pause();
+    // Notificar al DOM para mostrar el overlay de pausa
+    if (typeof window.showPauseOverlay === 'function') window.showPauseOverlay();
+  }
+
+  resumeGame() {
+    if (this.isPlaying || !this.audioEl || this.audioEl.ended) return;
+    this.isPlaying = true;
+    this.audioEl.play().catch(() => {});
+  }
+
+  // Reanuda con un pequeño conteo regresivo (mejor UX para rhythm game)
+  async resumeWithCountdown() {
+    await this.countdown();
+    this.isPlaying = true;
+    this.audioEl.play().catch(() => {});
   }
 }
 
 /* ════════════════════════════════════════
-   VISUAL HELPERS
+   PHASER CONFIG
 ════════════════════════════════════════ */
-function flashLane(lane, success) {
-  const el = document.getElementById('lane-' + lane);
-  el.classList.add(success ? 'flash' : 'miss-flash');
-  setTimeout(() => el.classList.remove('flash', 'miss-flash'), success ? 130 : 250);
-}
+const phaserGame = new Phaser.Game({
+  type:            Phaser.AUTO,
+  backgroundColor: '#050408',
+  parent:          'phaser-root',
+  scene:           GameScene,
+  scale: {
+    mode:   Phaser.Scale.RESIZE,
+    width:  window.innerWidth,
+    height: window.innerHeight,
+  },
+  banner: false,
+  fps:    { target: 60 },
+});
 
-function showFeedback(text, lane, hitY, type) {
-  const gameArea = document.getElementById('game-area');
-  const x = lane * GA.laneW + GA.laneW / 2;
-  const el = makeFeedbackEl(text, type, x, hitY - 20);
-  gameArea.appendChild(el);
-  setTimeout(() => el.remove(), 750);
-}
-
-function makeFeedbackEl(text, type, x, y) {
-  const el = document.createElement('div');
-  el.className   = 'feedback ' + type;
-  el.textContent = text;
-  el.style.left  = x + 'px';
-  el.style.top   = y + 'px';
-  el.style.transform = 'translateX(-50%)';
-  return el;
-}
-
-function updateHUD() {
-  document.getElementById('hud-score').textContent = score.toLocaleString();
-  const comboEl = document.getElementById('hud-combo');
-  if (combo >= 5) {
-    comboEl.textContent = combo + ' · combo';
-    comboEl.classList.add('active');
-  } else {
-    comboEl.textContent = combo > 0 ? combo + ' combo' : '';
-    comboEl.classList.toggle('active', combo > 0);
+// Asegurar z-index correcto del canvas de Phaser
+phaserGame.events.once('ready', () => {
+  const cv = phaserGame.canvas;
+  cv.style.cssText = 'position:fixed;inset:0;z-index:0;pointer-events:auto;width:100%!important;height:100%!important;';
+  if (cv.parentElement && cv.parentElement.id !== 'phaser-root') {
+    cv.parentElement.style.cssText = 'position:fixed;inset:0;z-index:0;pointer-events:auto;';
   }
-}
+});
 
 /* ════════════════════════════════════════
-   MILESTONES
+   COORDINACIÓN DOM ↔ PHASER
 ════════════════════════════════════════ */
-async function checkMilestone(progress) {
-  if (milestoneIdx >= MILESTONES.length) return;
-  if (msShown) return;
-  if (progress < MILESTONES[milestoneIdx][0]) return;
 
-  const text = MILESTONES[milestoneIdx][1];
-  milestoneIdx++;
-  msShown = true;
+// Llamado cuando el juego termina (desde la escena Phaser)
+window.onGameEnd = (score, hits, misses, maxCombo) => {
+  const total    = hits + misses;
+  const accuracy = total > 0 ? Math.round((hits / total) * 100) : 0;
 
-  const el   = document.getElementById('milestone');
-  const textEl = document.getElementById('milestone-text');
-  textEl.textContent = text;
-  el.classList.add('show');
-  await sleep(3200);
-  el.classList.remove('show');
-  await sleep(900);
-  msShown = false;
-}
-
-/* ════════════════════════════════════════
-   FIN DEL JUEGO
-════════════════════════════════════════ */
-async function endGame() {
-  gameRunning = false;
-  if (gameRAF) cancelAnimationFrame(gameRAF);
-  audio.pause();
-
-  // Guardar progreso
-  localStorage.setItem('visited_melodia', 'true');
-
-  const total    = totalHits + totalMisses;
-  const accuracy = total > 0 ? Math.round((totalHits / total) * 100) : 0;
-
-  // Determinar frase y subtexto según rendimiento
   let phrase, sub;
   if (accuracy >= 80) {
     phrase = '"Si le monde est contre toi,\ntoi et moi contre le monde."';
@@ -812,50 +965,136 @@ async function endGame() {
     sub    = 'Se trata de que suene, de que llegue, de que quede.';
   }
 
-  await sleep(800);
-  document.getElementById('ph1').classList.remove('active');
+  document.getElementById('ph2-score-num').textContent = score.toLocaleString();
+  document.getElementById('ph2-accuracy').textContent  = `${accuracy}% precisión · combo máx ${maxCombo}`;
+  document.getElementById('ph2-phrase').textContent    = phrase;
+  document.getElementById('ph2-sub').textContent       = sub;
+
+  // Ocultar controles de juego, mostrar pantalla de fin
+  document.getElementById('btn-pause-float').style.display = 'none';
   document.getElementById('ph2').classList.add('active');
+  setTimeout(() => {
+    document.getElementById('btn-restart-end').classList.add('show');
+    document.getElementById('btn-hub').classList.add('show');
+  }, 400);
+};
 
-  document.getElementById('ph2-score-num').textContent  = score.toLocaleString();
-  document.getElementById('ph2-accuracy').textContent   = `${accuracy}% precisión · combo máx ${maxCombo}`;
-  document.getElementById('ph2-phrase').textContent     = phrase;
-  document.getElementById('ph2-sub').textContent        = sub;
+// Botón "Comenzar"
+async function startGame() {
+  const scene = window.gameScene;
+  if (!scene) return;
 
-  await sleep(400);
-  document.getElementById('btn-hub').classList.add('show');
+  const audio = document.getElementById('song');
+  if (audio.readyState < 2) {
+    document.getElementById('btn-start').textContent = 'Cargando…';
+    await new Promise(res => audio.addEventListener('canplay', res, { once: true }));
+    document.getElementById('btn-start').textContent = 'Comenzar';
+  }
+
+  document.getElementById('ph0').classList.remove('active');
+  document.getElementById('exit-btn').style.display = 'block';
+  document.getElementById('btn-pause-float').style.display = 'block';
+
+  await scene.startGame();
+}
+
+function volverAlHub() {
+  if (window.gameScene) window.gameScene.pauseGame();
+  localStorage.setItem('visited_melodia', 'true');
+  document.body.classList.add('fade-out');
+  setTimeout(() => { window.location.href = 'Hub.html'; }, 1200);
 }
 
 /* ════════════════════════════════════════
-   CONTROLES — TECLADO
+   PAUSA — funciones globales
 ════════════════════════════════════════ */
-const KEY_MAP = { 'd': 0, 'f': 1, 'j': 2, 'k': 3 };
+
+// Muestra el overlay de pausa con la puntuación actual
+window.showPauseOverlay = () => {
+  const score = window.gameScene?.score ?? 0;
+  document.getElementById('pause-score').textContent = score.toLocaleString();
+  document.getElementById('ph-pause').classList.add('active');
+  document.getElementById('btn-pause-float').style.display = 'none';
+};
+
+function hidePauseOverlay() {
+  document.getElementById('ph-pause').classList.remove('active');
+}
+
+// Alterna pausa/reanuda desde el botón flotante o teclado
+function togglePause() {
+  const scene = window.gameScene;
+  if (!scene) return;
+  if (document.getElementById('ph-pause').classList.contains('active')) {
+    resumeFromPause();
+  } else if (scene.isPlaying) {
+    scene.pauseGame(); // pauseGame() llama a showPauseOverlay internamente
+  }
+}
+
+// Botón "Reanudar": cierra overlay, muestra cuenta regresiva 3-2-1, continúa
+async function resumeFromPause() {
+  const scene = window.gameScene;
+  if (!scene) return;
+  hidePauseOverlay();
+  await scene.resumeWithCountdown();
+  document.getElementById('btn-pause-float').style.display = 'block';
+}
+
+// Reinicia el juego completo (desde pausa o desde pantalla de fin)
+async function restartGame() {
+  const scene = window.gameScene;
+  if (!scene) return;
+
+  hidePauseOverlay();
+  // Limpiar pantalla de fin si estaba visible
+  document.getElementById('ph2').classList.remove('active');
+  document.getElementById('btn-restart-end').classList.remove('show');
+  document.getElementById('btn-hub').classList.remove('show');
+
+  document.getElementById('exit-btn').style.display = 'block';
+  document.getElementById('btn-pause-float').style.display = 'none';
+
+  await scene.startGame(); // startGame() hace reset + countdown + play
+  document.getElementById('btn-pause-float').style.display = 'block';
+}
+
+/* ════════════════════════════════════════
+   TECLADO GLOBAL — Escape y P pausan
+════════════════════════════════════════ */
 window.addEventListener('keydown', e => {
-  if (!gameRunning) return;
-  const lane = KEY_MAP[e.key.toLowerCase()];
-  if (lane !== undefined) hitLane(lane);
+  if (e.code !== 'Escape' && e.code !== 'KeyP') return;
+
+  const pauseActive = document.getElementById('ph-pause')?.classList.contains('active');
+  const scene = window.gameScene;
+
+  if (pauseActive) {
+    e.preventDefault();
+    resumeFromPause();
+  } else if (scene?.isPlaying) {
+    e.preventDefault();
+    scene.pauseGame();
+  }
 });
 
 /* ════════════════════════════════════════
-   CONTROLES — TOUCH
+   VISIBILIDAD — pausa al minimizar/cambiar tab
 ════════════════════════════════════════ */
-document.getElementById('game-area').addEventListener('touchstart', e => {
-  if (!gameRunning) return;
-  e.preventDefault();
-  Array.from(e.changedTouches).forEach(touch => {
-    const el      = document.getElementById('game-area');
-    const rect    = el.getBoundingClientRect();
-    const relX    = touch.clientX - rect.left;
-    const lane    = Math.min(3, Math.floor(relX / GA.laneW));
-    if (lane >= 0) hitLane(lane);
-  });
-}, { passive: false });
+document.addEventListener('visibilitychange', () => {
+  const scene = window.gameScene;
+  if (!scene) return;
+  // Al perder el foco: pausar y mostrar overlay
+  // Al recuperar: el usuario decide cuándo reanudar
+  if (document.hidden && scene.isPlaying) {
+    scene.pauseGame();
+  }
+});
 
 /* ════════════════════════════════════════
-   INTRO — ANIMACIÓN DE ENTRADA
+   INTRO — animación de texto
 ════════════════════════════════════════ */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-async function animIntro() {
+(async () => {
   await sleep(500);
   document.getElementById('ph0-tag').classList.add('lit');
   await sleep(800);
@@ -865,32 +1104,7 @@ async function animIntro() {
   document.querySelector('.ph0-rule').classList.add('lit');
   await sleep(400);
   document.getElementById('ph0-sub').classList.add('lit');
-}
-animIntro();
-
-/* ════════════════════════════════════════
-   PAUSA si pierde el foco
-════════════════════════════════════════ */
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden && gameRunning) {
-    audio.pause();
-    gameRunning = false;
-    cancelAnimationFrame(gameRAF);
-  } else if (!document.hidden && gameStarted && !audio.ended) {
-    audio.play().catch(() => {});
-    gameRunning = true;
-    gameLoop();
-  }
-});
-
-/* ════════════════════════════════════════
-   SALIDA
-════════════════════════════════════════ */
-function volverAlHub() {
-  localStorage.setItem('visited_melodia', 'true');
-  document.body.classList.add('fade-out');
-  setTimeout(() => { window.location.href = 'Hub.html'; }, 1200);
-}
+})();
 </script>
 </body>
 </html>
