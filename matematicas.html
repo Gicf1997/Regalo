@@ -180,7 +180,7 @@ function initChart1(){
   const noise=Array.from({length:65},()=>({x:Math.random()*60,y:Math.random()*60,r:3+Math.random()*3}));
   c1=new Chart(ctx,{type:'bubble',data:{datasets:[
     {label:'Ruido del universo',data:noise,backgroundColor:'rgba(255,255,255,.07)',borderColor:'transparent'},
-    {label:'Tu (El Outlier)',data:[{x:88,y:88,r:14}],backgroundColor:'rgba(137,247,254,.82)',borderColor:'#fff',borderWidth:2,hoverRadius:18},
+    {label:'Tu (Te sales de toda escala)',data:[{x:88,y:88,r:14}],backgroundColor:'rgba(137,247,254,.82)',borderColor:'#fff',borderWidth:2,hoverRadius:18},
   ]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:2500,easing:'easeOutElastic'},
     plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label}}},
     scales:{x:{grid:{color:'rgba(255,255,255,.04)'},max:100,ticks:{color:'rgba(255,255,255,.3)'}},
